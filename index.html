@@ -14,6 +14,7 @@
         <div>
           <p class="eyebrow">ABRSM MUSIC THEORY · GRADES 1–3</p>
           <h1>Terms &amp; Signs</h1>
+          <a class="text-link" href="question-bank.html">Browse the full question bank</a>
         </div>
         <div class="header-mark" aria-hidden="true">♪</div>
       </header>
@@ -22,6 +23,14 @@
         <div class="progress-row">
           <span id="progress-label">Question 1 of 15</span>
           <span id="score-label">0 correct</span>
+        </div>
+        <div class="test-options">
+          <label for="test-length">Questions per test</label>
+          <select id="test-length" aria-label="Number of questions">
+            <option value="15" selected>15</option>
+            <option value="10">10</option>
+            <option value="5">5</option>
+          </select>
         </div>
         <div class="progress-track" aria-hidden="true"><div id="progress-bar" class="progress-bar"></div></div>
 
@@ -45,7 +54,7 @@
         <button id="restart-button" class="primary-button" type="button">Do another test</button>
       </section>
 
-      <footer class="site-footer">15 questions · 5 from each grade · refreshed every test</footer>
+      <footer class="site-footer">5, 10, or 15 questions · refreshed every test</footer>
     </main>
   </body>
 </html>

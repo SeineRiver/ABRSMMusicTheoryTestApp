@@ -156,6 +156,7 @@ const BANK = Object.fromEntries(
     entries.map(([question, answer, image], index) => ({
       id: `grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
       grade: Number(grade),
+      category: 'terms',
       topic: 'terms-and-signs',
       question,
       answer,
@@ -170,8 +171,14 @@ const BANK = Object.fromEntries(
 // The study-bank page reads this same normalized data, keeping it in sync with the test.
 window.ABRSM_QUESTION_BANK = BANK;
 
-const state = { test: [], current: 0, score: 0, selected: null, locked: false };
+const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: 'terms' };
 const $ = (id) => document.getElementById(id);
+const NOTE_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const INTERVAL_DIATONIC_STEPS = { m2: 1, M2: 1, m3: 2, M3: 2, P4: 3, P5: 4, m6: 5, M6: 5, m7: 6, M7: 6, P8: 7 };
+const SAFE_ROOT_OCTAVES = {
+  treble: { C: [4, 5], D: [4, 5], E: [4, 5], F: [4, 5], G: [4, 5], A: [4, 5], B: [4, 5] },
+  bass: { C: [3, 4], D: [3, 4], E: [2, 3], F: [2, 3], G: [2, 3], A: [2, 3], B: [2, 3] },
+};
 
 function shuffle(list) {
   const copy = [...list];
@@ -188,11 +195,130 @@ function makeQuestion(grade, entry) {
   return { ...entry, correct, options: shuffle([correct, ...distractors]), userAnswer: null };
 }
 
-function createTest(questionCount = 15) {
+function randomFrom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function sameLetterDistractors(correct) {
+  const letter = correct[0];
+  const accidental = correct.slice(1);
+  const variants = {
+    '': ['b', '#'],
+    b: ['', '#'],
+    '#': ['', 'b'],
+    bb: ['b', ''],
+    '##': ['#', ''],
+  };
+  return variants[accidental].map((suffix) => `${letter}${suffix}`);
+}
+
+function adjacentLetterDistractor(correct) {
+  const index = NOTE_LETTERS.indexOf(correct[0]);
+  const lower = NOTE_LETTERS[(index + NOTE_LETTERS.length - 1) % NOTE_LETTERS.length];
+  const higher = NOTE_LETTERS[(index + 1) % NOTE_LETTERS.length];
+  return randomFrom([lower, `${lower}#`, higher, `${higher}b`]);
+}
+
+function noteToAbc(note, octave) {
+  const accidental = [...note.slice(1)].map((character) => (character === '#' ? '^' : '_')).join('');
+  const letter = note[0];
+  const pitch = octave === 4
+    ? letter
+    : octave > 4
+      ? `${letter.toLowerCase()}${"'".repeat(octave - 5)}`
+      : `${letter}${','.repeat(4 - octave)}`;
+  return `${accidental}${pitch}`;
+}
+
+function createAbcScore(clef, notes) {
+  return `X:1\nL:1/4\nK:C\nV:1 clef=${clef}\n${notes}4|`;
+}
+
+function makeIntervalNotation(root) {
+  const clef = randomFrom(['treble', 'bass']);
+  const clefName = clef === 'treble' ? 'treble (G)' : 'bass (F)';
+  const octave = randomFrom(SAFE_ROOT_OCTAVES[clef][root[0]]);
+  return {
+    abc: createAbcScore(clef, noteToAbc(root, octave)),
+    alt: `Starting note ${root} on a ${clefName} clef staff`,
+    clef,
+    octave,
+    root,
+  };
+}
+
+function makeIntervalOptionNotation(item, option) {
+  const rootIndex = NOTE_LETTERS.indexOf(item.notation.root[0]);
+  const optionIndex = NOTE_LETTERS.indexOf(option[0]);
+  const steps = option === item.correct
+    ? INTERVAL_DIATONIC_STEPS[item.interval.id]
+    : (optionIndex - rootIndex + NOTE_LETTERS.length) % NOTE_LETTERS.length;
+  const upperOctave = item.notation.octave + Math.floor((rootIndex + steps) / NOTE_LETTERS.length);
+  const chord = `[${noteToAbc(item.notation.root, item.notation.octave)}${noteToAbc(option, upperOctave)}]`;
+  return {
+    abc: createAbcScore(item.notation.clef, chord),
+    alt: `Harmonic interval with ${item.notation.root} below and ${option} above`,
+  };
+}
+
+function renderNotation(element, notation, width) {
+  element.replaceChildren();
+  element.setAttribute('aria-label', notation.alt);
+  window.ABCJS.renderAbc(element, notation.abc, {
+    staffwidth: width,
+    paddingtop: 0,
+    paddingbottom: 0,
+    paddingleft: 0,
+    paddingright: 0,
+  });
+}
+
+function makeIntervalQuestion(root, interval) {
+  const correct = window.ABRSM_INTERVAL_MATRIX[root][interval.id];
+  const distractors = [...sameLetterDistractors(correct), adjacentLetterDistractor(correct)];
+
+  return {
+    id: `interval-${root}-${interval.id}`,
+    category: 'intervals',
+    grade: null,
+    question: `What is the ${interval.name} above the following note?`,
+    answer: correct,
+    correct,
+    options: shuffle([correct, ...distractors]),
+    explanation: `A ${interval.name.toLowerCase()} is ${interval.semitones} semitone${interval.semitones === 1 ? '' : 's'}. Count ${interval.semitones} semitone${interval.semitones === 1 ? '' : 's'} up from ${root}; the correctly spelled answer is ${correct}.`,
+    image: null,
+    notation: makeIntervalNotation(root),
+    interval,
+    userAnswer: null,
+  };
+}
+
+function createTermsTest(questionCount) {
   const gradeCounts = [0, 0, 0];
   for (let index = 0; index < questionCount; index += 1) gradeCounts[index % 3] += 1;
 
-  state.test = shuffle([1, 2, 3].flatMap((grade, index) => shuffle(BANK[grade]).slice(0, gradeCounts[index]).map((entry) => makeQuestion(grade, entry))));
+  return shuffle([1, 2, 3].flatMap((grade, index) => shuffle(BANK[grade]).slice(0, gradeCounts[index]).map((entry) => makeQuestion(grade, entry))));
+}
+
+function createIntervalsTest(questionCount) {
+  const allQuestions = Object.keys(window.ABRSM_INTERVAL_MATRIX).flatMap((root) =>
+    window.ABRSM_INTERVALS.map((interval) => makeIntervalQuestion(root, interval))
+  );
+  return shuffle(allQuestions).slice(0, questionCount);
+}
+
+function setActiveCategory(category) {
+  document.querySelectorAll('.category-button').forEach((button) => {
+    const active = button.dataset.category === category;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+}
+
+function createTest(questionCount = Number($('test-length').value), category = state.category) {
+  state.category = category;
+  setActiveCategory(category);
+  state.test = state.category === 'intervals' ? createIntervalsTest(questionCount) : createTermsTest(questionCount);
   state.current = 0;
   state.score = 0;
   state.selected = null;
@@ -209,7 +335,7 @@ function renderQuestion() {
   $('progress-label').textContent = `Question ${position} of ${state.test.length}`;
   $('score-label').textContent = `${state.score} correct`;
   $('progress-bar').style.width = `${(position / state.test.length) * 100}%`;
-  $('grade-badge').textContent = `Grade ${item.grade}`;
+  $('grade-badge').textContent = item.category === 'intervals' ? 'Intervals' : `Grade ${item.grade}`;
   $('question-number').textContent = String(position).padStart(2, '0');
   $('question-text').textContent = item.question;
   $('feedback').textContent = '';
@@ -220,16 +346,25 @@ function renderQuestion() {
   state.locked = false;
 
   const imageWrap = $('question-image-wrap');
-  if (item.image) {
+  const notationWrap = $('question-notation-wrap');
+  if (item.notation) {
+    $('question-image').removeAttribute('src');
+    imageWrap.classList.add('hidden');
+    renderNotation($('question-notation'), item.notation, 520);
+    notationWrap.classList.remove('hidden');
+  } else if (item.image) {
     $('question-image').src = item.image;
     imageWrap.classList.remove('hidden');
+    notationWrap.classList.add('hidden');
   } else {
     $('question-image').removeAttribute('src');
     imageWrap.classList.add('hidden');
+    notationWrap.classList.add('hidden');
   }
 
   const answers = $('answers');
   answers.innerHTML = '';
+  answers.classList.toggle('interval-answers', item.category === 'intervals');
   item.options.forEach((option, index) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -237,7 +372,15 @@ function renderQuestion() {
     button.setAttribute('role', 'radio');
     button.setAttribute('aria-checked', 'false');
     button.dataset.answer = option;
-    button.innerHTML = `<strong>${String.fromCharCode(65 + index)}.</strong> ${option}`;
+    const letter = String.fromCharCode(65 + index);
+    button.setAttribute('aria-label', `Option ${letter}: ${option}`);
+    if (item.category === 'intervals') {
+      button.classList.add('interval-answer-option');
+      button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong><div class="answer-notation" role="img"></div>`;
+      renderNotation(button.querySelector('.answer-notation'), makeIntervalOptionNotation(item, option), 240);
+    } else {
+      button.innerHTML = `<strong>${letter}.</strong> ${option}`;
+    }
     button.addEventListener('click', () => chooseAnswer(button, option));
     answers.appendChild(button);
   });
@@ -296,13 +439,18 @@ function renderResults() {
   wrong.forEach((item) => {
     const card = document.createElement('article');
     card.className = 'review-item';
-    card.innerHTML = `<h3>Grade ${item.grade} · ${item.question}</h3>${item.image ? `<img class="review-image" src="${item.image}" alt="Musical notation for the question" />` : ''}<p><strong>Your answer:</strong> ${item.userAnswer || 'No answer'}</p><p><strong>Correct answer:</strong> ${item.correct}</p><p class="review-explanation"><strong>Explanation:</strong> ${item.explanation}</p>`;
+    const label = item.category === 'intervals' ? 'Intervals' : `Grade ${item.grade}`;
+    card.innerHTML = `<h3>${label} · ${item.question}</h3>${item.notation ? '<div class="review-notation" role="img"></div>' : item.image ? `<img class="review-image" src="${item.image}" alt="Musical notation for the question" />` : ''}<p><strong>Your answer:</strong> ${item.userAnswer || 'No answer'}</p><p><strong>Correct answer:</strong> ${item.correct}</p><p class="review-explanation"><strong>Explanation:</strong> ${item.explanation}</p>`;
+    if (item.notation) renderNotation(card.querySelector('.review-notation'), item.notation, 250);
     review.appendChild(card);
   });
 }
 
 if ($('test-screen')) {
   $('next-button').addEventListener('click', nextQuestion);
+  document.querySelectorAll('.category-button').forEach((button) => {
+    button.addEventListener('click', () => createTest(button.dataset.category === 'intervals' ? 10 : 15, button.dataset.category));
+  });
   $('test-length').addEventListener('change', (event) => createTest(Number(event.target.value)));
   $('restart-button').addEventListener('click', () => createTest(Number($('test-length').value)));
   createTest(15);

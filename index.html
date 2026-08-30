@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="ABRSM Grade 1–3 music theory terms and signs mock test." />
-    <title>Terms & Signs · Mock Test</title>
+    <meta name="description" content="ABRSM Grade 1–3 music theory quiz, including terms, signs, notation, and intervals." />
+    <title>Music Theory Quiz</title>
     <link rel="stylesheet" href="styles.css" />
+    <script src="interval-matrix.js" defer></script>
+    <script src="vendor/abcjs-basic-min.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -13,24 +15,32 @@
       <header class="site-header">
         <div>
           <p class="eyebrow">ABRSM MUSIC THEORY · GRADES 1–3</p>
-          <h1>Terms &amp; Signs</h1>
+          <h1>Music Theory Quiz</h1>
           <a class="text-link" href="question-bank.html">Browse the full question bank</a>
         </div>
         <div class="header-mark" aria-hidden="true">♪</div>
       </header>
 
       <section id="test-screen" class="screen" aria-live="polite">
+        <div class="category-selector" role="group" aria-label="Question category">
+          <span class="category-selector-label">Question category</span>
+          <div class="category-buttons">
+            <button class="category-button active" type="button" data-category="terms" aria-pressed="true">Terms, Signs, and Notations</button>
+            <button class="category-button" type="button" data-category="intervals" aria-pressed="false">Intervals</button>
+          </div>
+        </div>
+        <div class="test-options">
+          <label for="test-length">Questions per test
+            <select id="test-length" aria-label="Number of questions">
+              <option value="15" selected>15</option>
+              <option value="10">10</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+        </div>
         <div class="progress-row">
           <span id="progress-label">Question 1 of 15</span>
           <span id="score-label">0 correct</span>
-        </div>
-        <div class="test-options">
-          <label for="test-length">Questions per test</label>
-          <select id="test-length" aria-label="Number of questions">
-            <option value="15" selected>15</option>
-            <option value="10">10</option>
-            <option value="5">5</option>
-          </select>
         </div>
         <div class="progress-track" aria-hidden="true"><div id="progress-bar" class="progress-bar"></div></div>
 
@@ -38,6 +48,7 @@
           <div class="question-meta"><span id="grade-badge" class="grade-badge">Grade 1</span><span id="question-number">01</span></div>
           <h2 id="question-text"></h2>
           <div id="question-image-wrap" class="question-image-wrap hidden"><img id="question-image" alt="Musical notation for this question" /></div>
+          <div id="question-notation-wrap" class="question-notation-wrap hidden"><div id="question-notation" role="img"></div></div>
           <div id="answers" class="answers" role="radiogroup" aria-label="Answer choices"></div>
           <p id="feedback" class="feedback" role="status"></p>
           <button id="next-button" class="primary-button" type="button" disabled>Choose an answer</button>

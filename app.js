@@ -211,6 +211,27 @@ const KEY_SIGNATURES = [
 ].flatMap(([major, minor, accidental, notes]) => [
   { key: major, accidental, notes }, { key: minor, accidental, notes },
 ]);
+const SCALE_TEMPLATES = [
+  { major: ['C major', 'C', ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C']], minor: ['A minor', 'Am', ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'A']] },
+  { major: ['G major', 'G', ['G', 'A', 'B', 'C', 'D', 'E', 'F#', 'G']], minor: ['E minor', 'Em', ['E', 'F#', 'G', 'A', 'B', 'C', 'D', 'E']] },
+  { major: ['D major', 'D', ['D', 'E', 'F#', 'G', 'A', 'B', 'C#', 'D']], minor: ['B minor', 'Bm', ['B', 'C#', 'D', 'E', 'F#', 'G', 'A', 'B']] },
+  { major: ['A major', 'A', ['A', 'B', 'C#', 'D', 'E', 'F#', 'G#', 'A']], minor: ['F♯ minor', 'F#m', ['F#', 'G#', 'A', 'B', 'C#', 'D', 'E', 'F#']] },
+  { major: ['E major', 'E', ['E', 'F#', 'G#', 'A', 'B', 'C#', 'D#', 'E']], minor: ['C♯ minor', 'C#m', ['C#', 'D#', 'E', 'F#', 'G#', 'A', 'B', 'C#']] },
+  { major: ['F major', 'F', ['F', 'G', 'A', 'Bb', 'C', 'D', 'E', 'F']], minor: ['D minor', 'Dm', ['D', 'E', 'F', 'G', 'A', 'Bb', 'C', 'D']] },
+  { major: ['B♭ major', 'Bb', ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A', 'Bb']], minor: ['G minor', 'Gm', ['G', 'A', 'Bb', 'C', 'D', 'Eb', 'F', 'G']] },
+  { major: ['E♭ major', 'Eb', ['Eb', 'F', 'G', 'Ab', 'Bb', 'C', 'D', 'Eb']], minor: ['C minor', 'Cm', ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb', 'C']] },
+  { major: ['A♭ major', 'Ab', ['Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'G', 'Ab']], minor: ['F minor', 'Fm', ['F', 'G', 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F']] },
+];
+const SCALE_QUESTIONS = SCALE_TEMPLATES.flatMap(({ major, minor }) => {
+  const [majorName, majorKey, majorNotes] = major;
+  const [minorName, minorKey, minorNotes] = minor;
+  const minorTonic = minorName.replace(/ minor$/, '');
+  return [
+    { name: majorName, answer: majorName, equivalent: minorName, key: majorKey, notes: majorNotes, type: 'major' },
+    { name: `${minorTonic} harmonic minor`, answer: `${minorTonic} harmonic minor`, equivalent: majorName, key: minorKey, notes: minorNotes, type: 'harmonic-minor' },
+    { name: `${minorTonic} melodic minor`, answer: `${minorTonic} melodic minor`, equivalent: majorName, key: minorKey, notes: minorNotes, type: 'melodic-minor' },
+  ];
+});
 const RHYTHM_VALUES = [
   { units: 48, duration: '12' }, { units: 32, duration: '8' }, { units: 24, duration: '6' },
   { units: 16, duration: '4' }, { units: 12, duration: '3' }, { units: 8, duration: '2' },
@@ -474,6 +495,81 @@ function makeKeySignatureQuestion() {
   };
 }
 
+function scaleNoteWithAccidental(note, useKeySignature, signatureNotes) {
+  if (useKeySignature && signatureNotes.includes(note[0])) return note[0];
+  return note;
+}
+
+function makeScaleNotation(scale, direction, clef, useKeySignature) {
+  const ascendingNotes = scale.notes;
+  const descendingNotes = scale.type === 'melodic-minor' ? scale.naturalNotes : ascendingNotes;
+  const sourceNotes = direction === 'ascending' ? ascendingNotes : [...descendingNotes].reverse();
+  let octave = (clef === 'treble' ? 4 : 3) + (direction === 'descending' ? 1 : 0);
+  const notes = sourceNotes.map((note, index) => {
+    if (index > 0) {
+      const previousLetter = NOTE_LETTERS.indexOf(sourceNotes[index - 1][0]);
+      const currentLetter = NOTE_LETTERS.indexOf(note[0]);
+      if (direction === 'ascending' && currentLetter <= previousLetter) octave += 1;
+      if (direction === 'descending' && currentLetter >= previousLetter) octave -= 1;
+    }
+    return `${noteToAbc(scaleNoteWithAccidental(note, useKeySignature, scale.signatureNotes), octave)}4`;
+  });
+  const key = useKeySignature ? scale.key : 'C';
+  return {
+    abc: `X:1\nM:none\nL:1/4\nK:${key}\nV:1 clef=${clef}\n${notes.join(' ')}`,
+    alt: `${direction} ${scale.name} scale in ${clef} clef${useKeySignature ? ' with a key signature' : ' with accidentals on the notes'}`,
+  };
+}
+
+function makeScaleQuestion() {
+  const base = randomFrom(SCALE_TEMPLATES);
+  const isMajor = Math.random() < 0.5;
+  const [majorName, majorKey, majorNotes] = base.major;
+  const [minorName, minorKey, naturalMinorNotes] = base.minor;
+  const signatureNotes = KEY_SIGNATURES.find(({ key }) => key === majorName)?.notes || [];
+  const type = isMajor ? 'major' : randomFrom(['harmonic-minor', 'melodic-minor']);
+  const minorTonic = minorName.replace(/ minor$/, '');
+  const minorQuality = type === 'harmonic-minor' ? 'harmonic minor' : 'melodic minor';
+  const minorEquivalent = `${minorTonic} ${randomFrom(['harmonic minor', 'melodic minor'])}`;
+  const scale = isMajor
+    ? { name: majorName, answer: majorName, equivalent: minorEquivalent, key: majorKey, notes: majorNotes, naturalNotes: majorNotes, signatureNotes, type }
+    : {
+      name: `${minorTonic} ${minorQuality}`,
+      answer: `${minorTonic} ${minorQuality}`,
+      equivalent: majorName,
+      key: minorKey,
+      notes: naturalMinorNotes.map((note, index) => {
+        const harmonic = type === 'harmonic-minor' && index === 6;
+        const melodic = type === 'melodic-minor' && index >= 5 && index <= 6;
+        if (harmonic || melodic) {
+          return note.endsWith('b') ? `${note[0]}` : note.includes('#') ? note : `${note}#`;
+        }
+        return note;
+      }),
+      naturalNotes: naturalMinorNotes,
+      signatureNotes,
+      type,
+    };
+  const direction = randomFrom(['ascending', 'descending']);
+  const clef = randomFrom(['treble', 'bass']);
+  const useKeySignature = Math.random() < 0.5;
+  const answerPool = SCALE_QUESTIONS.map(({ answer }) => answer).filter((answer) => answer !== scale.answer && answer !== scale.equivalent);
+  return {
+    id: `scale-identification-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'key-signatures',
+    grade: null,
+    answerType: 'scale-identification',
+    question: 'Identify this scale.',
+    answer: scale.answer,
+    correct: scale.answer,
+    options: shuffle([scale.answer, scale.equivalent, ...shuffle(answerPool).slice(0, 2)]),
+    explanation: `${scale.answer} is shown ${direction}. Its relative key is ${scale.equivalent}.`,
+    image: null,
+    notation: makeScaleNotation(scale, direction, clef, useKeySignature),
+    userAnswer: null,
+  };
+}
+
 function createTermsTest(questionCount) {
   const gradeCounts = [0, 0, 0];
   for (let index = 0; index < questionCount; index += 1) gradeCounts[index % 3] += 1;
@@ -489,9 +585,12 @@ function createIntervalsTest(questionCount) {
 }
 
 function createTimeSignaturesTest(questionCount) {
-  return shuffle(Array.from({ length: questionCount }, (_, index) => (
-    index % 2 === 0 ? makeTimeSignatureQuestion() : makeKeySignatureQuestion()
-  )));
+  const timeSignatureCount = Math.floor(questionCount * 0.3);
+  const questions = Array.from({ length: timeSignatureCount }, () => makeTimeSignatureQuestion());
+  for (let index = timeSignatureCount; index < questionCount; index += 1) {
+    questions.push((index - timeSignatureCount) % 2 === 0 ? makeKeySignatureQuestion() : makeScaleQuestion());
+  }
+  return shuffle(questions);
 }
 
 function setActiveCategory(category) {

@@ -179,6 +179,16 @@ const SAFE_ROOT_OCTAVES = {
   treble: { C: [4, 5], D: [4, 5], E: [4, 5], F: [4, 5], G: [4, 5], A: [4, 5], B: [4, 5] },
   bass: { C: [3, 4], D: [3, 4], E: [2, 3], F: [2, 3], G: [2, 3], A: [2, 3], B: [2, 3] },
 };
+const TIME_SIGNATURES = [
+  { top: 2, bottom: 4 }, { top: 3, bottom: 4 }, { top: 4, bottom: 4 },
+  { top: 2, bottom: 2 }, { top: 3, bottom: 2 }, { top: 4, bottom: 2 },
+  { top: 3, bottom: 8 }, { top: 6, bottom: 8 }, { top: 9, bottom: 8 }, { top: 12, bottom: 8 },
+].map((signature) => Object.freeze({ ...signature, label: `${signature.top}/${signature.bottom}` }));
+const RHYTHM_VALUES = [
+  { units: 48, duration: '12' }, { units: 32, duration: '8' }, { units: 24, duration: '6' },
+  { units: 16, duration: '4' }, { units: 12, duration: '3' }, { units: 8, duration: '2' },
+  { units: 6, duration: '3/2' }, { units: 4, duration: '' }, { units: 2, duration: '/2', semiquaver: true },
+];
 
 function shuffle(list) {
   const copy = [...list];
@@ -264,13 +274,19 @@ function makeIntervalOptionNotation(item, option) {
 function renderNotation(element, notation, width) {
   element.replaceChildren();
   element.setAttribute('aria-label', notation.alt);
+  element.classList.toggle('hide-time-signature', Boolean(notation.hideTimeSignature));
   window.ABCJS.renderAbc(element, notation.abc, {
     staffwidth: width,
+    add_classes: true,
+    ...(notation.lineBreaks ? { lineBreaks: notation.lineBreaks } : {}),
     paddingtop: 0,
     paddingbottom: 0,
     paddingleft: 0,
     paddingright: 0,
   });
+  if (notation.hideTimeSignature) {
+    element.querySelectorAll('.abcjs-time-signature, .time-signature').forEach((timeSignature) => timeSignature.remove());
+  }
 }
 
 function makeIntervalQuestion(root, interval) {
@@ -293,6 +309,105 @@ function makeIntervalQuestion(root, interval) {
   };
 }
 
+function getTimeSignatureGroups(signature) {
+  const beatUnits = 32 / signature.bottom;
+  if (signature.bottom === 8 && signature.top > 3 && signature.top % 3 === 0) {
+    return Array(signature.top / 3).fill(beatUnits * 3);
+  }
+  return Array(signature.top).fill(beatUnits);
+}
+
+function randomNotationPitch(clef) {
+  return clef === 'treble'
+    ? randomFrom(['C', 'D', 'E', 'F', 'G', 'A', 'B', 'c', 'd'])
+    : randomFrom(['C,', 'D,', 'E,', 'F,', 'G,', 'A,', 'B,', 'C', 'D']);
+}
+
+function makeRhythmToken(value, clef) {
+  const symbol = Math.random() < 0.28 ? 'z' : randomNotationPitch(clef);
+  return `${symbol}${value.duration}`;
+}
+
+function fillRhythmGroup(groupUnits, clef, allowSemiquavers) {
+  let remaining = groupUnits;
+  const tokens = [];
+  const smallestUnit = allowSemiquavers ? 2 : 4;
+  while (remaining > 0) {
+    const choices = RHYTHM_VALUES.filter((value) =>
+      (!value.semiquaver || allowSemiquavers)
+      && value.units <= remaining
+      && (remaining - value.units === 0 || remaining - value.units >= smallestUnit)
+    );
+    const value = randomFrom(choices);
+    tokens.push(makeRhythmToken(value, clef));
+    remaining -= value.units;
+  }
+  return tokens;
+}
+
+function makeRhythmBar(groups, clef, allowSemiquavers) {
+  const barUnits = groups.reduce((sum, units) => sum + units, 0);
+  const fullBarValues = RHYTHM_VALUES.filter((value) => value.units === barUnits && (!value.semiquaver || allowSemiquavers));
+  return fullBarValues.length > 0 && Math.random() < 0.22
+    ? [makeRhythmToken(randomFrom(fullBarValues), clef)]
+    : groups.flatMap((group) => fillRhythmGroup(group, clef, allowSemiquavers));
+}
+
+function makeCompactRhythmBar(groups, clef, allowSemiquavers) {
+  return groups.map((group) => {
+    const value = RHYTHM_VALUES.find((candidate) => candidate.units === group && (!candidate.semiquaver || allowSemiquavers));
+    return makeRhythmToken(value, clef);
+  });
+}
+
+function makeTimeSignatureNotation(signature) {
+  const clef = randomFrom(['treble', 'bass']);
+  const groups = getTimeSignatureGroups(signature);
+  const barUnits = groups.reduce((sum, units) => sum + units, 0);
+  const allowSemiquavers = signature.bottom === 8;
+  const barCount = 3;
+  let bars = [];
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    bars = Array.from({ length: barCount }, () => makeRhythmBar(groups, clef, allowSemiquavers));
+    if (bars.flat().length <= 30) break;
+  }
+  if (bars.flat().length > 30) {
+    bars = Array.from({ length: barCount }, () => makeCompactRhythmBar(groups, clef, allowSemiquavers));
+  }
+
+  return {
+    abc: `X:1\nM:${signature.label}\nL:1/8\nK:C\nV:1 clef=${clef}\n${bars.map((bar) => bar.join(' ')).join('|')}||`,
+    alt: `${barCount} bars of rhythm in ${clef === 'treble' ? 'treble' : 'bass'} clef`,
+    hideTimeSignature: true,
+    groups,
+    barUnits,
+    barCount,
+    tokenCount: bars.flat().length,
+    lineBreaks: [2],
+  };
+}
+
+function makeTimeSignatureQuestion() {
+  const signature = randomFrom(TIME_SIGNATURES);
+  const compound = signature.bottom === 8 && signature.top > 3 && signature.top % 3 === 0;
+  return {
+    id: `time-signature-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'time-signatures',
+    grade: null,
+    answerType: 'time-signature',
+    question: 'What is the time signature of the following bars?',
+    answer: signature.label,
+    correct: signature.label,
+    options: [],
+    explanation: compound
+      ? `${signature.label} has ${signature.top / 3} main beats, each grouped as three quavers.`
+      : `${signature.label} has ${signature.top} beats in each bar, with a ${signature.bottom} note receiving one beat.`,
+    image: null,
+    notation: makeTimeSignatureNotation(signature),
+    userAnswer: null,
+  };
+}
+
 function createTermsTest(questionCount) {
   const gradeCounts = [0, 0, 0];
   for (let index = 0; index < questionCount; index += 1) gradeCounts[index % 3] += 1;
@@ -307,6 +422,10 @@ function createIntervalsTest(questionCount) {
   return shuffle(allQuestions).slice(0, questionCount);
 }
 
+function createTimeSignaturesTest(questionCount) {
+  return Array.from({ length: questionCount }, () => makeTimeSignatureQuestion());
+}
+
 function setActiveCategory(category) {
   document.querySelectorAll('.category-button').forEach((button) => {
     const active = button.dataset.category === category;
@@ -318,7 +437,11 @@ function setActiveCategory(category) {
 function createTest(questionCount = Number($('test-length').value), category = state.category) {
   state.category = category;
   setActiveCategory(category);
-  state.test = state.category === 'intervals' ? createIntervalsTest(questionCount) : createTermsTest(questionCount);
+  state.test = state.category === 'intervals'
+    ? createIntervalsTest(questionCount)
+    : state.category === 'time-signatures'
+      ? createTimeSignaturesTest(questionCount)
+      : createTermsTest(questionCount);
   state.current = 0;
   state.score = 0;
   state.selected = null;
@@ -335,7 +458,11 @@ function renderQuestion() {
   $('progress-label').textContent = `Question ${position} of ${state.test.length}`;
   $('score-label').textContent = `${state.score} correct`;
   $('progress-bar').style.width = `${(position / state.test.length) * 100}%`;
-  $('grade-badge').textContent = item.category === 'intervals' ? 'Intervals' : `Grade ${item.grade}`;
+  $('grade-badge').textContent = item.category === 'intervals'
+    ? 'Intervals'
+    : item.category === 'time-signatures'
+      ? 'Time signatures'
+      : `Grade ${item.grade}`;
   $('question-number').textContent = String(position).padStart(2, '0');
   $('question-text').textContent = item.question;
   $('feedback').textContent = '';
@@ -364,7 +491,13 @@ function renderQuestion() {
 
   const answers = $('answers');
   answers.innerHTML = '';
+  answers.classList.remove('correct', 'incorrect');
   answers.classList.toggle('interval-answers', item.category === 'intervals');
+  answers.classList.toggle('time-signature-answers', item.answerType === 'time-signature');
+  if (item.answerType === 'time-signature') {
+    renderTimeSignatureAnswers(item);
+    return;
+  }
   item.options.forEach((option, index) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -386,6 +519,36 @@ function renderQuestion() {
   });
 }
 
+function renderTimeSignatureAnswers() {
+  const answers = $('answers');
+  const numerator = document.createElement('select');
+  numerator.className = 'time-signature-select';
+  numerator.setAttribute('aria-label', 'Top number of the time signature');
+  const denominator = document.createElement('select');
+  denominator.className = 'time-signature-select';
+  denominator.setAttribute('aria-label', 'Bottom number of the time signature');
+
+  [['Choose', ''], ['2', '2'], ['3', '3'], ['4', '4'], ['6', '6'], ['9', '9'], ['12', '12']].forEach(([label, value]) => {
+    numerator.add(new Option(label, value));
+  });
+  [['Choose', ''], ['2', '2'], ['4', '4'], ['8', '8']].forEach(([label, value]) => {
+    denominator.add(new Option(label, value));
+  });
+
+  const divider = document.createElement('span');
+  divider.className = 'time-signature-divider';
+  divider.setAttribute('aria-hidden', 'true');
+  divider.textContent = '/';
+  const updateSelection = () => {
+    state.selected = numerator.value && denominator.value ? `${numerator.value}/${denominator.value}` : null;
+    $('next-button').disabled = !state.selected;
+    $('next-button').textContent = state.selected ? 'Check answer' : 'Choose an answer';
+  };
+  numerator.addEventListener('change', updateSelection);
+  denominator.addEventListener('change', updateSelection);
+  answers.append(numerator, divider, denominator);
+}
+
 function chooseAnswer(button, answer) {
   if (state.locked) return;
   state.selected = answer;
@@ -403,11 +566,16 @@ function submitAnswer() {
   state.locked = true;
   const correct = state.selected === item.correct;
   if (correct) state.score += 1;
-  document.querySelectorAll('.answer-option').forEach((option) => {
-    option.disabled = true;
-    if (option.dataset.answer === item.correct) option.classList.add('correct');
-    else if (option.dataset.answer === item.userAnswer) option.classList.add('incorrect');
-  });
+  if (item.answerType === 'time-signature') {
+    document.querySelectorAll('.time-signature-select').forEach((select) => { select.disabled = true; });
+    $('answers').classList.add(correct ? 'correct' : 'incorrect');
+  } else {
+    document.querySelectorAll('.answer-option').forEach((option) => {
+      option.disabled = true;
+      if (option.dataset.answer === item.correct) option.classList.add('correct');
+      else if (option.dataset.answer === item.userAnswer) option.classList.add('incorrect');
+    });
+  }
   $('feedback').textContent = correct ? 'Correct — well done.' : `Not quite. The correct answer is “${item.correct}”.`;
   $('feedback').className = `feedback ${correct ? 'good' : 'bad'}`;
   $('score-label').textContent = `${state.score} correct`;
@@ -439,7 +607,11 @@ function renderResults() {
   wrong.forEach((item) => {
     const card = document.createElement('article');
     card.className = 'review-item';
-    const label = item.category === 'intervals' ? 'Intervals' : `Grade ${item.grade}`;
+    const label = item.category === 'intervals'
+      ? 'Intervals'
+      : item.category === 'time-signatures'
+        ? 'Time signatures'
+        : `Grade ${item.grade}`;
     card.innerHTML = `<h3>${label} · ${item.question}</h3>${item.notation ? '<div class="review-notation" role="img"></div>' : item.image ? `<img class="review-image" src="${item.image}" alt="Musical notation for the question" />` : ''}<p><strong>Your answer:</strong> ${item.userAnswer || 'No answer'}</p><p><strong>Correct answer:</strong> ${item.correct}</p><p class="review-explanation"><strong>Explanation:</strong> ${item.explanation}</p>`;
     if (item.notation) renderNotation(card.querySelector('.review-notation'), item.notation, 250);
     review.appendChild(card);
@@ -449,7 +621,7 @@ function renderResults() {
 if ($('test-screen')) {
   $('next-button').addEventListener('click', nextQuestion);
   document.querySelectorAll('.category-button').forEach((button) => {
-    button.addEventListener('click', () => createTest(button.dataset.category === 'intervals' ? 10 : 15, button.dataset.category));
+    button.addEventListener('click', () => createTest(button.dataset.category === 'terms' ? 15 : 10, button.dataset.category));
   });
   $('test-length').addEventListener('change', (event) => createTest(Number(event.target.value)));
   $('restart-button').addEventListener('click', () => createTest(Number($('test-length').value)));

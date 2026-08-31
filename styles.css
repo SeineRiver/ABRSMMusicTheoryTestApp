@@ -44,6 +44,7 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .answers.interval-answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .answers.pitch-answers { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .answers.time-signature-answers { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.answers.time-classification-answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .answers.scale-identification-answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .answers.rest-identification-answers { display: block; }
 .answers.key-signature-answers { display: block; }
@@ -63,6 +64,9 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .time-signature-mark { position: relative; justify-self: center; display: inline-grid; grid-template-rows: repeat(2, auto); row-gap: 6px; align-items: center; min-width: 34px; color: currentColor; font-family: Georgia, 'Times New Roman', serif; font-size: 1.8rem; font-weight: 700; line-height: 0.78; text-align: center; }
 .time-signature-mark.common-time, .time-signature-mark.alla-breve { display: block; font-size: 2.72rem; font-weight: 400; line-height: 1; }
 .time-signature-mark.alla-breve::after { position: absolute; top: 4%; bottom: 4%; left: 54%; border-left: 2px solid currentColor; content: ''; }
+.question-time-signature { display: grid; place-items: center; min-height: 150px; }
+.question-time-signature .time-signature-mark { font-size: 3.15rem; min-width: 58px; row-gap: 10px; }
+.question-time-signature .time-signature-mark.common-time, .question-time-signature .time-signature-mark.alla-breve { font-size: 4.75rem; }
 .key-signature-builder { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
 .key-signature-builder.correct { border-color: var(--green); background: var(--green-pale); }
 .key-signature-builder.incorrect { border-color: var(--red); background: var(--red-pale); }

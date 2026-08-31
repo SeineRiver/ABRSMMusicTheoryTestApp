@@ -187,6 +187,7 @@ const TIME_SIGNATURES = [
   { top: 2, bottom: 2 }, { top: 3, bottom: 2 }, { top: 4, bottom: 2 },
   { top: 3, bottom: 8 }, { top: 6, bottom: 8 }, { top: 9, bottom: 8 }, { top: 12, bottom: 8 },
 ].map((signature) => Object.freeze({ ...signature, label: `${signature.top}/${signature.bottom}` }));
+const TIME_SIGNATURE_CLASSES = ['Simple duple', 'Simple triple', 'Simple quadruple', 'Compound duple', 'Compound triple', 'Compound quadruple'];
 const CONFUSING_TIME_SIGNATURES = new Map([
   ['4/4', '2/2'], ['2/2', '4/4'],
   ['3/4', '6/8'], ['6/8', '3/4'],
@@ -353,6 +354,21 @@ function renderNotation(element, notation, width) {
   if (notation.hideTimeSignature) {
     element.querySelectorAll('.abcjs-time-signature, .time-signature').forEach((timeSignature) => timeSignature.remove());
   }
+}
+
+function timeSignatureMarkMarkup(signature) {
+  const [top, bottom] = signature.label.split('/');
+  const markType = signature.label === '4/4' ? ' common-time' : signature.label === '2/2' ? ' alla-breve' : '';
+  const ariaLabel = signature.label === '4/4' ? 'Common time, 4/4' : signature.label === '2/2' ? 'Alla breve, 2/2' : signature.label;
+  const content = signature.label === '4/4' || signature.label === '2/2' ? 'C' : `<span>${top}</span><span>${bottom}</span>`;
+  return `<span class="time-signature-mark${markType}" role="img" aria-label="${ariaLabel}">${content}</span>`;
+}
+
+function renderTimeSignaturePrompt(element, signature) {
+  element.replaceChildren();
+  element.classList.add('question-time-signature');
+  element.innerHTML = timeSignatureMarkMarkup(signature);
+  element.setAttribute('aria-label', signature.label);
 }
 
 function makeIntervalQuestion(root, interval) {
@@ -597,6 +613,32 @@ function makeTimeSignatureQuestion() {
   };
 }
 
+function timeSignatureClass(signature) {
+  const compound = signature.bottom === 8 && signature.top > 3 && signature.top % 3 === 0;
+  const beats = compound ? signature.top / 3 : signature.top;
+  return `${compound ? 'Compound' : 'Simple'} ${beats === 2 ? 'duple' : beats === 3 ? 'triple' : 'quadruple'}`;
+}
+
+function makeTimeSignatureClassificationQuestion() {
+  const signature = randomFrom(TIME_SIGNATURES);
+  const correct = timeSignatureClass(signature);
+  return {
+    id: `time-classification-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'time-signatures',
+    grade: null,
+    answerType: 'time-classification',
+    question: 'How is this time signature classified?',
+    answer: correct,
+    correct,
+    options: shuffle([correct, ...shuffle(TIME_SIGNATURE_CLASSES.filter((option) => option !== correct)).slice(0, 3)]),
+    explanation: `${signature.label} is ${correct.toLowerCase()}.`,
+    image: null,
+    notation: null,
+    timeSignaturePrompt: signature,
+    userAnswer: null,
+  };
+}
+
 function restAnswerLabel(answer) {
   if (!answer) return '';
   const duration = REST_DURATIONS.find((candidate) => candidate.units === answer.units);
@@ -803,7 +845,7 @@ function createTonicTriadsTest(questionCount) {
 
 function createTimeSignaturesTest(questionCount) {
   return shuffle(Array.from({ length: questionCount }, (_, index) => (
-    index % 2 === 0 ? makeTimeSignatureQuestion() : makeRestIdentificationQuestion()
+    index % 3 === 0 ? makeTimeSignatureQuestion() : index % 3 === 1 ? makeRestIdentificationQuestion() : makeTimeSignatureClassificationQuestion()
   )));
 }
 
@@ -873,18 +915,26 @@ function renderQuestion() {
 
   const imageWrap = $('question-image-wrap');
   const notationWrap = $('question-notation-wrap');
-  if (item.notation) {
+  if (item.timeSignaturePrompt) {
     $('question-image').removeAttribute('src');
     imageWrap.classList.add('hidden');
+    renderTimeSignaturePrompt($('question-notation'), item.timeSignaturePrompt);
+    notationWrap.classList.remove('hidden');
+  } else if (item.notation) {
+    $('question-image').removeAttribute('src');
+    imageWrap.classList.add('hidden');
+    $('question-notation').classList.remove('question-time-signature');
     renderNotation($('question-notation'), item.notation, item.notation.timeSignatureNotation ? 629 : 520);
     notationWrap.classList.remove('hidden');
   } else if (item.image) {
     $('question-image').src = item.image;
     imageWrap.classList.remove('hidden');
+    $('question-notation').classList.remove('question-time-signature');
     notationWrap.classList.add('hidden');
   } else {
     $('question-image').removeAttribute('src');
     imageWrap.classList.add('hidden');
+    $('question-notation').classList.remove('question-time-signature');
     notationWrap.classList.add('hidden');
   }
 
@@ -894,7 +944,8 @@ function renderQuestion() {
   answers.classList.toggle('interval-answers', item.category === 'intervals');
   answers.classList.toggle('pitch-answers', item.category === 'pitches');
   answers.classList.toggle('tonic-triad-answers', item.answerType === 'tonic-triad');
-  answers.classList.toggle('time-signature-answers', item.category === 'time-signatures');
+  answers.classList.toggle('time-signature-answers', item.category === 'time-signatures' && item.answerType !== 'time-classification');
+  answers.classList.toggle('time-classification-answers', item.answerType === 'time-classification');
   answers.classList.toggle('key-signature-answers', item.answerType === 'key-signature');
   answers.classList.toggle('scale-identification-answers', item.answerType === 'scale-identification');
   answers.classList.toggle('rest-identification-answers', item.answerType === 'rest-identification');
@@ -926,11 +977,9 @@ function renderQuestion() {
     } else if (item.category === 'pitches') {
       button.classList.add('pitch-answer-option');
       button.innerHTML = `<strong>${letter}.</strong> ${option}`;
-    } else if (item.category === 'time-signatures') {
-      const [top, bottom] = option.split('/');
-      const markType = option === '4/4' ? ' common-time' : option === '2/2' ? ' alla-breve' : '';
+    } else if (item.category === 'time-signatures' && item.answerType !== 'time-classification') {
       button.classList.add('time-signature-answer-option');
-      button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong><span class="time-signature-mark${markType}" role="img" aria-label="${option === '4/4' ? 'Common time, 4/4' : option === '2/2' ? 'Alla breve, 2/2' : option}">${option === '4/4' || option === '2/2' ? 'C' : `<span>${top}</span><span>${bottom}</span>`}</span>`;
+      button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong>${timeSignatureMarkMarkup({ label: option })}`;
     } else {
       button.innerHTML = `<strong>${letter}.</strong> ${option}`;
     }

@@ -19,6 +19,7 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Tonic-triad practice has builders for using a key signature first or writing accidentals directly on the chord tones.
 - Time-signature and key-signature practice are separate categories, each with 5, 10, or 15 questions.
 - Time-signature practice mixes meter recognition with missing-rest questions; key-signature practice mixes key-signature building with scale identification.
+- Time-signature practice also asks learners to classify metres as simple or compound, and as duple, triple, or quadruple.
 - Some time-signature questions hide two to four rests across two bars and ask the learner to identify each rest’s duration and dotted state.
 - Choice-based questions have four answer choices: one correct answer and three distractors.
 - Questions are answered one at a time.

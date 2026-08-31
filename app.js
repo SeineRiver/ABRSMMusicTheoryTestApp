@@ -195,12 +195,6 @@ const KEY_SIGNATURE_ORDERS = {
   sharp: ['F', 'C', 'G', 'D', 'A', 'E', 'B'],
   flat: ['B', 'E', 'A', 'D', 'G', 'C', 'F'],
 };
-const KEY_SIGNATURE_STAFF_POSITIONS = {
-  // Treble clef positions, measured from the top line of the staff.
-  // The G-sharp position is kept on the higher G as used by this exercise.
-  sharp: { F: 26, C: 44, G: 20, D: 38, A: 56, E: 32, B: 50 },
-  flat: { B: 50, E: 32, A: 56, D: 38, G: 62, C: 44, F: 68 },
-};
 const KEY_SIGNATURES = [
   ['C major', 'A minor', 'none', []],
   ['G major', 'E minor', 'sharp', ['F']],
@@ -788,42 +782,18 @@ function renderQuestion() {
 }
 
 function renderKeySignaturePreview(element, accidental, notes) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 350 100');
-  svg.setAttribute('aria-hidden', 'true');
-  [26, 38, 50, 62, 74].forEach((y) => {
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', '8'); line.setAttribute('x2', '302');
-    line.setAttribute('y1', String(y)); line.setAttribute('y2', String(y));
-    svg.appendChild(line);
-  });
-  const clef = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  clef.setAttribute('x', '18');
-  clef.setAttribute('y', '82');
-  clef.setAttribute('class', 'key-signature-clef');
-  clef.textContent = '𝄞';
-  svg.appendChild(clef);
-  if (accidental && accidental !== 'none') {
-    notes.forEach((note, index) => {
-      const mark = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      mark.setAttribute('x', String(84 + index * 34));
-      const glyphOffset = accidental === 'flat' ? -3 : -1;
-      mark.setAttribute('y', String(KEY_SIGNATURE_STAFF_POSITIONS[accidental][note] + glyphOffset));
-      mark.setAttribute('dominant-baseline', 'central');
-      mark.setAttribute('class', 'key-signature-glyph');
-      mark.textContent = accidental === 'sharp' ? '♯' : '♭';
-      svg.appendChild(mark);
-    });
-  }
-  element.replaceChildren(svg);
-  element.setAttribute(
-    'aria-label',
+  const keyModifiers = accidental && accidental !== 'none'
+    ? notes.map((note) => `${accidental === 'sharp' ? '^' : '_'}${note}`).join(' ')
+    : '';
+  renderNotation(element, {
+    abc: `X:1\nM:none\nL:1/8\nK:C${keyModifiers ? ` ${keyModifiers}` : ''}\nV:1 clef=treble\ny8`,
+    alt:
     accidental === 'none'
       ? 'Empty staff: no sharps or flats'
       : accidental
         ? `Key signature preview: ${formatKeySignatureAnswer(keySignatureValue(accidental, notes))}`
-        : 'Empty staff: choose sharps, flats, or no accidentals'
-  );
+        : 'Empty staff: choose sharps, flats, or no accidentals',
+  }, 520);
 }
 
 function renderKeySignatureAnswers() {

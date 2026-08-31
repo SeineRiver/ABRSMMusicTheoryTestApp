@@ -240,6 +240,25 @@ const RHYTHM_VALUES = [
   { units: 16, duration: '4' }, { units: 12, duration: '3' }, { units: 8, duration: '2' },
   { units: 6, duration: '3/2' }, { units: 4, duration: '' }, { units: 2, duration: '/2', semiquaver: true },
 ];
+// Each entry is a complete subdivision of one beat (or one compound beat),
+// expressed in the same units as RHYTHM_VALUES. This keeps every generated bar
+// rhythmically legal while favouring patterns that look like real music.
+const RHYTHM_GROUP_TEMPLATES = {
+  4: [[4], [2, 2]],
+  8: [[8], [4, 4], [4, 2, 2]],
+  12: [[12], [8, 4], [4, 8], [4, 4, 4]],
+  16: [[16], [8, 8], [8, 4, 4], [4, 4, 4, 4]],
+  24: [[24], [16, 8], [8, 16], [8, 8, 8]],
+  32: [[32], [16, 16], [16, 8, 8], [8, 8, 8, 8]],
+  48: [[48], [32, 16], [16, 16, 16]],
+};
+const REST_DURATIONS = [
+  { name: 'semibreve', units: 32, duration: '8' },
+  { name: 'minim', units: 16, duration: '4' },
+  { name: 'crotchet', units: 8, duration: '2' },
+  { name: 'quaver', units: 4, duration: '' },
+  { name: 'semiquaver', units: 2, duration: '/2' },
+];
 
 function shuffle(list) {
   const copy = [...list];
@@ -326,8 +345,10 @@ function renderNotation(element, notation, width) {
   element.replaceChildren();
   element.setAttribute('aria-label', notation.alt);
   element.classList.toggle('hide-time-signature', Boolean(notation.hideTimeSignature));
+  const scale = notation.scale || 1;
   window.ABCJS.renderAbc(element, notation.abc, {
-    staffwidth: width,
+    staffwidth: width / scale,
+    scale,
     add_classes: true,
     ...(notation.lineBreaks ? { lineBreaks: notation.lineBreaks } : {}),
     paddingtop: 0,
@@ -375,40 +396,36 @@ function randomNotationPitch(clef) {
 }
 
 function makeRhythmToken(value, clef) {
-  const symbol = Math.random() < 0.28 ? 'z' : randomNotationPitch(clef);
+  const symbol = Math.random() < 0.16 ? 'z' : randomNotationPitch(clef);
   return `${symbol}${value.duration}`;
 }
 
-function fillRhythmGroup(groupUnits, clef, allowSemiquavers) {
-  let remaining = groupUnits;
-  const tokens = [];
-  const smallestUnit = allowSemiquavers ? 2 : 4;
-  while (remaining > 0) {
-    const choices = RHYTHM_VALUES.filter((value) =>
-      (!value.semiquaver || allowSemiquavers)
-      && value.units <= remaining
-      && (remaining - value.units === 0 || remaining - value.units >= smallestUnit)
-    );
-    const value = randomFrom(choices);
-    tokens.push(makeRhythmToken(value, clef));
-    remaining -= value.units;
-  }
-  return tokens;
-}
-
 function makeRhythmBar(groups, clef, allowSemiquavers) {
-  const barUnits = groups.reduce((sum, units) => sum + units, 0);
-  const fullBarValues = RHYTHM_VALUES.filter((value) => value.units === barUnits && (!value.semiquaver || allowSemiquavers));
-  return fullBarValues.length > 0 && Math.random() < 0.22
-    ? [makeRhythmToken(randomFrom(fullBarValues), clef)]
-    : groups.flatMap((group) => fillRhythmGroup(group, clef, allowSemiquavers));
+  return groups.flatMap((group) => {
+    const templates = (RHYTHM_GROUP_TEMPLATES[group] || [[group]]).filter((template) =>
+      allowSemiquavers || !template.includes(2)
+    );
+    const template = randomFrom(templates);
+    return template.map((units) => makeRhythmToken(RHYTHM_VALUES.find((value) => value.units === units), clef));
+  });
 }
 
-function makeCompactRhythmBar(groups, clef, allowSemiquavers) {
-  return groups.map((group) => {
-    const value = RHYTHM_VALUES.find((candidate) => candidate.units === group && (!candidate.semiquaver || allowSemiquavers));
-    return makeRhythmToken(value, clef);
+function restDurationFromValue(value) {
+  const match = REST_DURATIONS.find((duration) => duration.units === value.units || duration.units * 1.5 === value.units);
+  return { units: match.units, dotted: value.units === match.units * 1.5 };
+}
+
+function makeRestIdentificationBar(groups, clef, allowSemiquavers) {
+  const descriptors = groups.flatMap((group) => {
+    const templates = (RHYTHM_GROUP_TEMPLATES[group] || [[group]]).filter((template) => allowSemiquavers || !template.includes(2));
+    return randomFrom(templates).map((units) => {
+      const value = RHYTHM_VALUES.find((candidate) => candidate.units === units);
+      return { units, value, token: `${randomNotationPitch(clef)}${value.duration}` };
+    });
   });
+  const restCount = randomFrom([1, 2]);
+  shuffle(descriptors).slice(0, restCount).forEach((descriptor) => { descriptor.missing = true; });
+  return descriptors;
 }
 
 function makeTimeSignatureNotation(signature) {
@@ -417,14 +434,7 @@ function makeTimeSignatureNotation(signature) {
   const barUnits = groups.reduce((sum, units) => sum + units, 0);
   const allowSemiquavers = signature.bottom === 8;
   const barCount = 3;
-  let bars = [];
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    bars = Array.from({ length: barCount }, () => makeRhythmBar(groups, clef, allowSemiquavers));
-    if (bars.flat().length <= 30) break;
-  }
-  if (bars.flat().length > 30) {
-    bars = Array.from({ length: barCount }, () => makeCompactRhythmBar(groups, clef, allowSemiquavers));
-  }
+  const bars = Array.from({ length: barCount }, () => makeRhythmBar(groups, clef, allowSemiquavers));
 
   return {
     abc: `X:1\nM:${signature.label}\nL:1/8\nK:C\nV:1 clef=${clef}\n${bars.map((bar) => bar.join(' ')).join('|')}||`,
@@ -460,6 +470,68 @@ function makeTimeSignatureQuestion() {
       : `${signature.label} has ${signature.top} beats in each bar, with a ${signature.bottom} note receiving one beat.`,
     image: null,
     notation: makeTimeSignatureNotation(signature),
+    userAnswer: null,
+  };
+}
+
+function restAnswerLabel(answer) {
+  if (!answer) return '';
+  const duration = REST_DURATIONS.find((candidate) => candidate.units === answer.units);
+  return `${answer.dotted ? 'dotted ' : ''}${duration.name} rest`;
+}
+
+function formatRestAnswers(answer) {
+  if (!answer) return '';
+  let values;
+  try { values = JSON.parse(answer); } catch (error) { return answer; }
+  return values.map((value, index) => `Rest ${index + 1}: ${restAnswerLabel(value)}`).join('; ');
+}
+
+const REST_ICON_FILES = {
+  semibreve: 'assets/rest-icons/semibreve.svg',
+  minim: 'assets/rest-icons/minim.svg',
+  crotchet: 'assets/rest-icons/crotchet.svg',
+  quaver: 'assets/rest-icons/quaver.svg',
+  semiquaver: 'assets/rest-icons/semiquaver.svg',
+};
+
+function restIconMarkup(name) {
+  return `<span class="rest-choice-icon rest-choice-icon--${name}" aria-hidden="true"><img src="${REST_ICON_FILES[name]}" alt=""></span>`;
+}
+
+function makeRestIdentificationQuestion() {
+  const signature = randomFrom(TIME_SIGNATURES);
+  const clef = randomFrom(['treble', 'bass']);
+  const groups = getTimeSignatureGroups(signature);
+  const allowSemiquavers = signature.bottom === 8;
+  const bars = Array.from({ length: 2 }, () => makeRestIdentificationBar(groups, clef, allowSemiquavers));
+  let marker = 0;
+  bars.forEach((bar) => bar.filter((descriptor) => descriptor.missing).forEach((descriptor) => { descriptor.id = ++marker; }));
+  const rests = bars.flatMap((bar) => bar.filter((descriptor) => descriptor.missing).map((descriptor) => ({ ...restDurationFromValue(descriptor.value), id: descriptor.id })));
+  const abcBars = bars.map((bar) => bar.map((descriptor) => {
+    if (!descriptor.missing) return descriptor.token;
+    return `"${String.fromCharCode(9311 + descriptor.id)}"y${descriptor.value.duration}`;
+  }).join(' '));
+  const correct = JSON.stringify(rests.map(({ units, dotted }) => ({ units, dotted })));
+  return {
+    id: `rest-identification-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'time-signatures',
+    grade: null,
+    answerType: 'rest-identification',
+    question: 'What is the value of each missing rest?',
+    answer: correct,
+    correct,
+    options: [],
+    explanation: rests.map((rest, index) => `Rest ${index + 1} is a ${restAnswerLabel(rest)}.`).join(' '),
+    image: null,
+    notation: {
+      abc: `X:1\nM:${signature.label}\nL:1/8\nK:C\nV:1 clef=${clef}\n${abcBars.join('|')}||`,
+      alt: `Two bars in ${signature.label} with numbered missing rests in ${clef} clef`,
+      timeSignatureNotation: true,
+      scale: 1.2,
+      lineBreaks: [1],
+    },
+    restCount: rests.length,
     userAnswer: null,
   };
 }
@@ -591,7 +663,9 @@ function createIntervalsTest(questionCount) {
 
 function createTimeSignaturesTest(questionCount) {
   const timeSignatureCount = Math.floor(questionCount * 0.3);
-  const questions = Array.from({ length: timeSignatureCount }, () => makeTimeSignatureQuestion());
+  const questions = Array.from({ length: timeSignatureCount }, () => (
+    Math.random() < 0.5 ? makeTimeSignatureQuestion() : makeRestIdentificationQuestion()
+  ));
   for (let index = timeSignatureCount; index < questionCount; index += 1) {
     questions.push((index - timeSignatureCount) % 2 === 0 ? makeKeySignatureQuestion() : makeScaleQuestion());
   }
@@ -669,8 +743,14 @@ function renderQuestion() {
   answers.classList.toggle('interval-answers', item.category === 'intervals');
   answers.classList.toggle('time-signature-answers', item.category === 'time-signatures');
   answers.classList.toggle('key-signature-answers', item.answerType === 'key-signature');
+  answers.classList.toggle('scale-identification-answers', item.answerType === 'scale-identification');
+  answers.classList.toggle('rest-identification-answers', item.answerType === 'rest-identification');
   if (item.answerType === 'key-signature') {
     renderKeySignatureAnswers(item);
+    return;
+  }
+  if (item.answerType === 'rest-identification') {
+    renderRestValueAnswers(item);
     return;
   }
   item.options.forEach((option, index) => {
@@ -804,6 +884,54 @@ function renderKeySignatureAnswers() {
   update();
 }
 
+function renderRestValueAnswers(item) {
+  const answers = $('answers');
+  const builder = document.createElement('div');
+  builder.className = 'rest-value-builder';
+  const selections = Array.from({ length: item.restCount }, () => null);
+  const update = () => {
+    builder.querySelectorAll('.rest-duration-button').forEach((button) => {
+      const index = Number(button.dataset.restIndex);
+      button.classList.toggle('selected', selections[index]?.units === Number(button.dataset.units));
+    });
+    builder.querySelectorAll('.rest-dot-button').forEach((button) => {
+      const index = Number(button.dataset.restIndex);
+      button.classList.toggle('selected', Boolean(selections[index]?.dotted));
+    });
+    state.selected = selections.every(Boolean) ? JSON.stringify(selections) : null;
+    $('next-button').disabled = !state.selected;
+    $('next-button').textContent = state.selected ? 'Check answer' : 'Complete the rest values';
+  };
+  for (let index = 0; index < item.restCount; index += 1) {
+    const group = document.createElement('section');
+    group.className = 'rest-answer-group';
+    group.innerHTML = `<h3>Rest ${index + 1}</h3>`;
+    const controls = document.createElement('div');
+    controls.className = 'rest-answer-controls';
+    const durations = document.createElement('div');
+    durations.className = 'rest-duration-options';
+    REST_DURATIONS.forEach((duration) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'rest-duration-button';
+      button.dataset.restIndex = String(index); button.dataset.units = String(duration.units);
+      button.setAttribute('aria-label', `${duration.name} rest`);
+      button.innerHTML = restIconMarkup(duration.name);
+      button.addEventListener('click', () => { selections[index] = { units: duration.units, dotted: selections[index]?.dotted || false }; update(); });
+      durations.appendChild(button);
+    });
+    const dot = document.createElement('button');
+    dot.type = 'button'; dot.className = 'rest-dot-button';
+    dot.dataset.restIndex = String(index); dot.setAttribute('aria-label', 'Toggle dotted rest');
+    dot.innerHTML = '<span class="rest-dot-symbol">·</span>';
+    dot.addEventListener('click', () => { if (selections[index]) selections[index].dotted = !selections[index].dotted; update(); });
+    controls.append(durations, dot);
+    group.appendChild(controls);
+    builder.appendChild(group);
+  }
+  answers.appendChild(builder);
+  update();
+}
+
 function chooseAnswer(button, answer) {
   if (state.locked) return;
   state.selected = answer;
@@ -830,7 +958,16 @@ function submitAnswer() {
     document.querySelectorAll('.key-signature-builder button').forEach((button) => { button.disabled = true; });
     document.querySelector('.key-signature-builder').classList.add(correct ? 'correct' : 'incorrect');
   }
-  $('feedback').textContent = correct ? 'Correct — well done.' : `Not quite. The correct answer is “${item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.correct) : item.correct}”.`;
+  if (item.answerType === 'rest-identification') {
+    document.querySelectorAll('.rest-value-builder button').forEach((button) => { button.disabled = true; });
+    document.querySelector('.rest-value-builder').classList.add(correct ? 'correct' : 'incorrect');
+  }
+  const formattedCorrect = item.answerType === 'key-signature'
+    ? formatKeySignatureAnswer(item.correct)
+    : item.answerType === 'rest-identification'
+      ? formatRestAnswers(item.correct)
+      : item.correct;
+  $('feedback').textContent = correct ? 'Correct — well done.' : `Not quite. The correct answer is “${formattedCorrect}”.`;
   $('feedback').className = `feedback ${correct ? 'good' : 'bad'}`;
   $('score-label').textContent = `${state.score} correct`;
   $('next-button').textContent = state.current === state.test.length - 1 ? 'See results' : 'Next question';
@@ -868,8 +1005,8 @@ function renderResults() {
       : item.category === 'time-signatures'
         ? 'Time signatures'
         : `Grade ${item.grade}`;
-    const userAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.userAnswer) : item.userAnswer;
-    const correctAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.correct) : item.correct;
+    const userAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.userAnswer) : item.answerType === 'rest-identification' ? formatRestAnswers(item.userAnswer) : item.userAnswer;
+    const correctAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.correct) : item.answerType === 'rest-identification' ? formatRestAnswers(item.correct) : item.correct;
     card.innerHTML = `<h3>${label} · ${item.question}</h3>${item.notation ? '<div class="review-notation" role="img"></div>' : item.image ? `<img class="review-image" src="${item.image}" alt="Musical notation for the question" />` : ''}<p><strong>Your answer:</strong> ${userAnswer || 'No answer'}</p><p><strong>Correct answer:</strong> ${correctAnswer}</p><p class="review-explanation"><strong>Explanation:</strong> ${item.explanation}</p>`;
     if (item.notation) renderNotation(card.querySelector('.review-notation'), item.notation, 250);
     review.appendChild(card);

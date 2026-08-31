@@ -31,7 +31,7 @@ Open [`index.html`](./index.html) directly in a web browser.
 
 - Time signatures are shown as musical notation choices, including common time (`C`) and alla breve/cut time.
 - Time-signature distractors avoid the easily confused pairs 4/4 vs 2/2 and 3/4 vs 6/8.
-- Time-signature rhythms are generated from meter-specific templates, with sensible beat groupings and controlled subdivisions.
+- Time-signature rhythms are generated from meter-specific templates, with sensible beat groupings, controlled subdivisions, and occasional crotchet, quaver, or semiquaver triplets.
 - Key-signature questions support the requested major keys and their relative minor keys.
 - The key-signature builder lets learners choose sharps, flats, or no accidentals, then select notes in C–B order. The answer is validated against the conventional written order (F–C–G–D–A–E–B for sharps and B–E–A–D–G–C–F for flats).
 - Scale-identification questions show eight semibreves in treble or bass clef, ascending or descending, with major, harmonic-minor, and melodic-minor scales. Scales may use a key signature or accidentals written on the notes.

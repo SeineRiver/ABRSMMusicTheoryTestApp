@@ -247,6 +247,12 @@ const RHYTHM_GROUP_TEMPLATES = {
   32: [[32], [16, 16], [16, 8, 8], [8, 8, 8, 8]],
   48: [[48], [32, 16], [16, 16, 16]],
 };
+const RHYTHM_TRIPLET_RATE = 0.04;
+const RHYTHM_GROUP_TRIPLETS = {
+  4: 'semiquaver',
+  8: 'quaver',
+  16: 'crotchet',
+};
 const REST_DURATIONS = [
   { name: 'semibreve', units: 32, duration: '8' },
   { name: 'minim', units: 16, duration: '4' },
@@ -539,14 +545,36 @@ function makeRhythmToken(value, clef) {
   return `${symbol}${value.duration}`;
 }
 
+function makeTripletToken(kind, clef) {
+  const value = kind === 'crotchet'
+    ? RHYTHM_VALUES.find((candidate) => candidate.units === 8)
+    : kind === 'quaver'
+      ? RHYTHM_VALUES.find((candidate) => candidate.units === 4)
+      : RHYTHM_VALUES.find((candidate) => candidate.units === 2);
+  return `(3${Array.from({ length: 3 }, () => `${randomNotationPitch(clef)}${value.duration}`).join('')}`;
+}
+
 function makeRhythmBar(groups, clef, allowSemiquavers) {
-  return groups.map((group) => {
+  const bar = [];
+  for (let index = 0; index < groups.length; index += 1) {
+    const group = groups[index];
+    // In crotchet-based simple metre, a crotchet triplet spans two beats.
+    if (group === 8 && groups[index + 1] === 8 && Math.random() < RHYTHM_TRIPLET_RATE) {
+      bar.push([makeTripletToken('crotchet', clef)]);
+      index += 1;
+      continue;
+    }
     const templates = (RHYTHM_GROUP_TEMPLATES[group] || [[group]]).filter((template) =>
       allowSemiquavers || !template.includes(2)
     );
+    if (RHYTHM_GROUP_TRIPLETS[group] && Math.random() < RHYTHM_TRIPLET_RATE) {
+      bar.push([makeTripletToken(RHYTHM_GROUP_TRIPLETS[group], clef)]);
+      continue;
+    }
     const template = randomFrom(templates);
-    return template.map((units) => makeRhythmToken(RHYTHM_VALUES.find((value) => value.units === units), clef));
-  });
+    bar.push(template.map((units) => makeRhythmToken(RHYTHM_VALUES.find((value) => value.units === units), clef)));
+  }
+  return bar;
 }
 
 function restDurationFromValue(value) {

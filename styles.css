@@ -62,10 +62,10 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .key-signature-builder.correct { border-color: var(--green); background: var(--green-pale); }
 .key-signature-builder.incorrect { border-color: var(--red); background: var(--red-pale); }
 .key-signature-preview { overflow: hidden; border: 1px solid #e4eaf0; border-radius: 10px; background: #fbfcfd; padding: 4px 8px; color: var(--ink); }
-.key-signature-preview svg { display: block; width: 100%; height: auto; }
+.key-signature-preview svg { display: block; width: min(100%, 320px); height: auto; margin: 0 auto; }
 .key-signature-preview line { stroke: currentColor; stroke-width: 1; }
-.key-signature-clef { fill: currentColor; font-family: Bravura, 'Noto Music', 'Apple Symbols', serif; font-size: 100px; }
-.key-signature-glyph { fill: currentColor; font-family: Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 700; text-anchor: middle; }
+.key-signature-clef { fill: currentColor; font-family: Bravura, 'Noto Music', 'Apple Symbols', serif; font-size: 117px; }
+.key-signature-glyph { fill: currentColor; font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 700; text-anchor: middle; }
 .key-signature-modes, .key-signature-notes { display: flex; flex-wrap: wrap; gap: 8px; }
 .key-mode-button, .key-note-button { border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); padding: 9px 12px; font: inherit; font-weight: 800; cursor: pointer; }
 .key-mode-button:hover:not(:disabled), .key-mode-button:focus-visible, .key-note-button:hover:not(:disabled), .key-note-button:focus-visible { border-color: var(--blue); background: #f7fbff; outline: none; }
@@ -81,6 +81,8 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .question-image-wrap, .question-notation-wrap { margin: -4px 0 28px; padding: 14px; border-radius: 14px; background: #fbfcfd; border: 1px solid #edf1f5; }
 .question-image-wrap img { display: block; max-width: 100%; width: auto; max-height: 180px; object-fit: contain; }
 .question-notation-wrap svg { display: block; max-width: 100%; height: auto; }
+.question-notation-wrap .abcjs-staff path { shape-rendering: crispEdges; }
+.question-notation-wrap .abcjs-notehead { paint-order: stroke; stroke: var(--paper); stroke-width: 1px; }
 .hidden { display: none !important; }
 .result-hero { padding: 16px 0 26px; }
 .result-hero h2 { margin-bottom: 10px; font-size: clamp(2rem, 6vw, 3rem); letter-spacing: -0.05em; }

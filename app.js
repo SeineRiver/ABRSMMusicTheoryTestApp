@@ -195,8 +195,8 @@ const KEY_SIGNATURE_ORDERS = {
 const KEY_SIGNATURE_STAFF_POSITIONS = {
   // Treble clef positions, measured from the top line of the staff.
   // The G-sharp position is kept on the higher G as used by this exercise.
-  sharp: { F: 20, C: 42.5, G: 12.5, D: 35, A: 57.5, E: 27.5, B: 50 },
-  flat: { B: 50, E: 27.5, A: 57.5, D: 35, G: 65, C: 42.5, F: 72.5 },
+  sharp: { F: 26, C: 44, G: 20, D: 38, A: 56, E: 32, B: 50 },
+  flat: { B: 50, E: 32, A: 56, D: 38, G: 62, C: 44, F: 68 },
 };
 const KEY_SIGNATURES = [
   ['C major', 'A minor', 'none', []],
@@ -426,6 +426,7 @@ function makeTimeSignatureNotation(signature) {
   return {
     abc: `X:1\nM:${signature.label}\nL:1/8\nK:C\nV:1 clef=${clef}\n${bars.map((bar) => bar.join(' ')).join('|')}||`,
     alt: `${barCount} bars of rhythm in ${clef === 'treble' ? 'treble' : 'bass'} clef`,
+    timeSignatureNotation: true,
     hideTimeSignature: true,
     groups,
     barUnits,
@@ -518,6 +519,7 @@ function makeScaleNotation(scale, direction, clef, useKeySignature) {
   return {
     abc: `X:1\nM:none\nL:1/4\nK:${key}\nV:1 clef=${clef}\n${notes.join(' ')}`,
     alt: `${direction} ${scale.name} scale in ${clef} clef${useKeySignature ? ' with a key signature' : ' with accidentals on the notes'}`,
+    scaleNotation: true,
   };
 }
 
@@ -646,7 +648,7 @@ function renderQuestion() {
   if (item.notation) {
     $('question-image').removeAttribute('src');
     imageWrap.classList.add('hidden');
-    renderNotation($('question-notation'), item.notation, 520);
+    renderNotation($('question-notation'), item.notation, item.notation.scaleNotation || item.notation.timeSignatureNotation ? 629 : 520);
     notationWrap.classList.remove('hidden');
   } else if (item.image) {
     $('question-image').src = item.image;
@@ -698,9 +700,9 @@ function renderKeySignaturePreview(element, accidental, notes) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 350 100');
   svg.setAttribute('aria-hidden', 'true');
-  [20, 35, 50, 65, 80].forEach((y) => {
+  [26, 38, 50, 62, 74].forEach((y) => {
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', '8'); line.setAttribute('x2', '342');
+    line.setAttribute('x1', '8'); line.setAttribute('x2', '302');
     line.setAttribute('y1', String(y)); line.setAttribute('y2', String(y));
     svg.appendChild(line);
   });
@@ -714,7 +716,9 @@ function renderKeySignaturePreview(element, accidental, notes) {
     notes.forEach((note, index) => {
       const mark = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       mark.setAttribute('x', String(84 + index * 34));
-      mark.setAttribute('y', String(KEY_SIGNATURE_STAFF_POSITIONS[accidental][note] + 9));
+      const glyphOffset = accidental === 'flat' ? -3 : -1;
+      mark.setAttribute('y', String(KEY_SIGNATURE_STAFF_POSITIONS[accidental][note] + glyphOffset));
+      mark.setAttribute('dominant-baseline', 'central');
       mark.setAttribute('class', 'key-signature-glyph');
       mark.textContent = accidental === 'sharp' ? '♯' : '♭';
       svg.appendChild(mark);

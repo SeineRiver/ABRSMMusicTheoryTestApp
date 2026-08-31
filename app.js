@@ -594,7 +594,6 @@ function makeScaleNotation(scale, direction, clef, useKeySignature) {
   return {
     abc: `X:1\nM:none\nL:1/4\nK:${key}\nV:1 clef=${clef}\n${notes.join(' ')}`,
     alt: `${direction} ${scale.name} scale in ${clef} clef${useKeySignature ? ' with a key signature' : ' with accidentals on the notes'}`,
-    scaleNotation: true,
   };
 }
 
@@ -734,7 +733,7 @@ function renderQuestion() {
   if (item.notation) {
     $('question-image').removeAttribute('src');
     imageWrap.classList.add('hidden');
-    renderNotation($('question-notation'), item.notation, item.notation.scaleNotation || item.notation.timeSignatureNotation ? 629 : 520);
+    renderNotation($('question-notation'), item.notation, item.notation.timeSignatureNotation ? 629 : 520);
     notationWrap.classList.remove('hidden');
   } else if (item.image) {
     $('question-image').src = item.image;

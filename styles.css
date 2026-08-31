@@ -42,7 +42,7 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .question-card h2 { max-width: 620px; margin-bottom: 28px; font-size: clamp(1.45rem, 4vw, 2.1rem); line-height: 1.18; letter-spacing: -0.03em; }
 .answers { display: grid; gap: 12px; }
 .answers.interval-answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.answers.time-signature-answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.answers.time-signature-answers { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .answers.scale-identification-answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .answers.rest-identification-answers { display: block; }
 .answers.key-signature-answers { display: block; }
@@ -53,12 +53,12 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .answer-option.incorrect { border-color: var(--red); background: var(--red-pale); color: #8c1d17; }
 .answer-option:disabled { cursor: default; }
 .interval-answer-option { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; min-height: 112px; padding: 10px 16px; }
-.time-signature-answer-option { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; min-height: 112px; padding: 10px 16px; }
+.time-signature-answer-option { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: center; min-height: 86px; padding: 8px; }
 .answer-choice-label { align-self: start; padding-top: 8px; }
 .answer-notation { min-width: 0; }
 .answer-notation svg { display: block; max-width: 100%; height: auto; }
-.time-signature-mark { position: relative; justify-self: center; display: inline-grid; grid-template-rows: repeat(2, auto); row-gap: 8px; align-items: center; min-width: 42px; color: currentColor; font-family: Georgia, 'Times New Roman', serif; font-size: 2.25rem; font-weight: 700; line-height: 0.78; text-align: center; }
-.time-signature-mark.common-time, .time-signature-mark.alla-breve { display: block; font-size: 3.4rem; font-weight: 400; line-height: 1; }
+.time-signature-mark { position: relative; justify-self: center; display: inline-grid; grid-template-rows: repeat(2, auto); row-gap: 6px; align-items: center; min-width: 34px; color: currentColor; font-family: Georgia, 'Times New Roman', serif; font-size: 1.8rem; font-weight: 700; line-height: 0.78; text-align: center; }
+.time-signature-mark.common-time, .time-signature-mark.alla-breve { display: block; font-size: 2.72rem; font-weight: 400; line-height: 1; }
 .time-signature-mark.alla-breve::after { position: absolute; top: 4%; bottom: 4%; left: 54%; border-left: 2px solid currentColor; content: ''; }
 .key-signature-builder { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
 .key-signature-builder.correct { border-color: var(--green); background: var(--green-pale); }
@@ -136,4 +136,4 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .policy-content p { margin: 0; color: var(--muted); line-height: 1.6; }
 .bank-item img { display: block; max-width: min(100%, 440px); max-height: 200px; margin: 14px 0; object-fit: contain; }
 @media (max-width: 620px) { .rest-duration-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 520px) { .app-shell { width: min(100% - 22px, 760px); padding-top: 24px; } .site-header { margin-bottom: 28px; } .category-buttons { flex-direction: column; } .test-options { align-items: stretch; flex-direction: column; } .test-options label { justify-content: space-between; } .question-card { border-radius: 18px; padding: 22px 18px; } .answer-option { padding: 14px; } .answers.time-signature-answers, .answers.scale-identification-answers { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .app-shell { width: min(100% - 22px, 760px); padding-top: 24px; } .site-header { margin-bottom: 28px; } .category-buttons { flex-direction: column; } .test-options { align-items: stretch; flex-direction: column; } .test-options label { justify-content: space-between; } .question-card { border-radius: 18px; padding: 22px 18px; } .answer-option { padding: 14px; } .time-signature-answer-option { padding: 6px 4px; } .answers.scale-identification-answers { grid-template-columns: 1fr; } }

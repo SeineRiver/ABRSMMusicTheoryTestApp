@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 1.1.0';
+const APP_VERSION = 'Version 1.2.0';
 
 const RAW_BANK = {
   1: [
@@ -345,8 +345,8 @@ function renderNotation(element, notation, width) {
     scale,
     add_classes: true,
     ...(notation.lineBreaks ? { lineBreaks: notation.lineBreaks } : {}),
-    paddingtop: 0,
-    paddingbottom: 0,
+    paddingtop: 2,
+    paddingbottom: 10,
     paddingleft: 0,
     paddingright: 0,
   });
@@ -371,6 +371,68 @@ function makeIntervalQuestion(root, interval) {
     image: null,
     notation: makeIntervalNotation(root),
     interval,
+    userAnswer: null,
+  };
+}
+
+function intervalRecognitionCandidates() {
+  return SCALE_TEMPLATES.flatMap((template) => [template.major, template.minor].flatMap(([scaleName, key, notes]) => {
+    const scaleNotes = new Set(notes);
+    return notes.slice(0, -1).flatMap((root) => {
+      if (root.length !== 1 || !window.ABRSM_INTERVAL_MATRIX[root]) return [];
+      return window.ABRSM_INTERVALS
+        .filter((interval) => interval.semitones >= 2 && interval.semitones < 12)
+        .filter((interval) => scaleNotes.has(window.ABRSM_INTERVAL_MATRIX[root][interval.id]))
+        .map((interval) => ({ scaleName, key, notes, root, interval, upper: window.ABRSM_INTERVAL_MATRIX[root][interval.id] }));
+    });
+  }));
+}
+
+function makeIntervalRecognitionQuestion() {
+  const candidate = randomFrom(intervalRecognitionCandidates());
+  const { scaleName, key, notes, root, interval, upper } = candidate;
+  const clef = randomFrom(['treble', 'bass']);
+  const octave = randomFrom(SAFE_ROOT_OCTAVES[clef][root]);
+  const rootIndex = NOTE_LETTERS.indexOf(root[0]);
+  const upperIndex = NOTE_LETTERS.indexOf(upper[0]);
+  const upperOctave = octave + Math.floor((rootIndex + INTERVAL_DIATONIC_STEPS[interval.id]) / NOTE_LETTERS.length);
+  const presentation = randomFrom(['harmonic', 'melodic']);
+  const useKeySignature = Math.random() < 0.5;
+  const keyForNotation = useKeySignature ? key : 'C';
+  const signatureNotes = [...new Set(notes.filter((note) => note.length > 1).map((note) => note[0]))];
+  const lowerNote = noteToAbc(scaleNoteWithAccidental(root, useKeySignature, signatureNotes), octave);
+  const upperNote = noteToAbc(scaleNoteWithAccidental(upper, useKeySignature, signatureNotes), upperOctave);
+  const notation = presentation === 'harmonic'
+    ? `[${lowerNote}${upperNote}]4`
+    : `${lowerNote}4 ${upperNote}4`;
+  const nearby = window.ABRSM_INTERVALS.filter((option) => (
+    option.id !== interval.id && Math.abs(option.semitones - interval.semitones) <= 2
+  ));
+  const matchingNumber = nearby.filter((option) => INTERVAL_DIATONIC_STEPS[option.id] === INTERVAL_DIATONIC_STEPS[interval.id]);
+  const nearbyDistractors = [...matchingNumber, ...shuffle(nearby.filter((option) => !matchingNumber.includes(option)))].slice(0, 2);
+  const otherPresentation = presentation === 'harmonic' ? 'melodic' : 'harmonic';
+  const answerLabel = (option, style) => `${option.name} (${style})`;
+  const correct = answerLabel(interval, presentation);
+
+  return {
+    id: `interval-recognition-${presentation}-${interval.id}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'intervals',
+    grade: null,
+    answerType: 'interval-identification',
+    question: 'Name this interval.',
+    answer: correct,
+    correct,
+    options: shuffle([
+      correct,
+      answerLabel(interval, otherPresentation),
+      ...nearbyDistractors.map((option) => answerLabel(option, randomFrom(['harmonic', 'melodic']))),
+    ]),
+    explanation: `This is a ${interval.name.toLowerCase()} (${interval.semitones} semitones) shown ${presentation === 'harmonic' ? 'with both notes sounding together' : 'as two notes in succession'}${useKeySignature ? ` in ${scaleName}` : ''}.`,
+    image: null,
+    notation: {
+      abc: `X:1\nM:none\nL:1/4\nK:${keyForNotation}\nV:1 clef=${clef}\n${notation}`,
+      alt: `${presentation} ${interval.name} in ${clef} clef${useKeySignature ? ` with the key signature of ${scaleName}` : ' with written accidentals'}`,
+    },
     userAnswer: null,
   };
 }
@@ -657,7 +719,11 @@ function createIntervalsTest(questionCount) {
   const allQuestions = Object.keys(window.ABRSM_INTERVAL_MATRIX).flatMap((root) =>
     window.ABRSM_INTERVALS.map((interval) => makeIntervalQuestion(root, interval))
   );
-  return shuffle(allQuestions).slice(0, questionCount);
+  const intervalNameCount = Math.floor(questionCount / 2);
+  return shuffle([
+    ...shuffle(allQuestions).slice(0, questionCount - intervalNameCount),
+    ...Array.from({ length: intervalNameCount }, () => makeIntervalRecognitionQuestion()),
+  ]);
 }
 
 function createTimeSignaturesTest(questionCount) {
@@ -764,7 +830,7 @@ function renderQuestion() {
     button.dataset.answer = option;
     const letter = String.fromCharCode(65 + index);
     button.setAttribute('aria-label', `Option ${letter}: ${option}`);
-    if (item.category === 'intervals') {
+    if (item.category === 'intervals' && item.answerType !== 'interval-identification') {
       button.classList.add('interval-answer-option');
       button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong><div class="answer-notation" role="img"></div>`;
       renderNotation(button.querySelector('.answer-notation'), makeIntervalOptionNotation(item, option), 240);

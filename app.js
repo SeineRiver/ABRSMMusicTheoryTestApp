@@ -630,7 +630,13 @@ function makeScaleQuestion() {
   const direction = randomFrom(['ascending', 'descending']);
   const clef = randomFrom(['treble', 'bass']);
   const useKeySignature = Math.random() < 0.5;
-  const answerPool = SCALE_QUESTIONS.map(({ answer }) => answer).filter((answer) => answer !== scale.answer && answer !== scale.equivalent);
+  const relativeOption = isMajor ? minorEquivalent : majorName;
+  const parallelOption = isMajor
+    ? `${majorName.replace(/ major$/, '')} ${randomFrom(['harmonic minor', 'melodic minor'])}`
+    : `${minorTonic} major`;
+  const randomOption = randomFrom(SCALE_QUESTIONS
+    .map(({ answer }) => answer)
+    .filter((answer) => ![scale.answer, relativeOption, parallelOption].includes(answer)));
   return {
     id: `scale-identification-${Math.random().toString(36).slice(2, 8)}`,
     category: 'key-signatures',
@@ -639,8 +645,8 @@ function makeScaleQuestion() {
     question: 'Identify this scale.',
     answer: scale.answer,
     correct: scale.answer,
-    options: shuffle([scale.answer, scale.equivalent, ...shuffle(answerPool).slice(0, 2)]),
-    explanation: `${scale.answer} is shown ${direction}. Its relative key is ${scale.equivalent}.`,
+    options: shuffle([scale.answer, relativeOption, parallelOption, randomOption]),
+    explanation: `${scale.answer} is shown ${direction}. Its relative key is ${relativeOption}; its parallel key has the same tonic, ${parallelOption}.`,
     image: null,
     notation: makeScaleNotation(scale, direction, clef, useKeySignature),
     userAnswer: null,

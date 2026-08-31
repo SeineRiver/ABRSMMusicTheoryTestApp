@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 1.2.0';
+const APP_VERSION = 'Version 1.3.0';
 
 const RAW_BANK = {
   1: [
@@ -437,6 +437,73 @@ function makeIntervalRecognitionQuestion() {
   };
 }
 
+function formatPitchName(note) {
+  return note.replaceAll('#', '♯').replaceAll('b', '♭');
+}
+
+function makePitchQuestion() {
+  // Excluding C major/A minor ensures every pitch question has a visible key signature.
+  const template = randomFrom(SCALE_TEMPLATES.slice(1));
+  const [scaleName, key, scaleNotes] = randomFrom([template.major, template.minor]);
+  const note = randomFrom(scaleNotes.slice(0, -1));
+  const clef = randomFrom(['treble', 'bass']);
+  const octave = randomFrom(SAFE_ROOT_OCTAVES[clef][note[0]]);
+  const signatureNotes = [...new Set(scaleNotes.filter((scaleNote) => scaleNote.length > 1).map((scaleNote) => scaleNote[0]))];
+  const noteIndex = NOTE_LETTERS.indexOf(note[0]);
+  const neighbours = [
+    NOTE_LETTERS[(noteIndex + NOTE_LETTERS.length - 1) % NOTE_LETTERS.length],
+    NOTE_LETTERS[(noteIndex + 1) % NOTE_LETTERS.length],
+  ];
+  const distractors = [...sameLetterDistractors(note), randomFrom(neighbours)];
+  const correct = formatPitchName(note);
+
+  return {
+    id: `pitch-${key}-${note}-${clef}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'pitches',
+    grade: null,
+    question: 'Name this note.',
+    answer: correct,
+    correct,
+    options: shuffle([correct, ...distractors.map(formatPitchName)]),
+    explanation: `${correct} is shown in ${clef} clef with the key signature of ${scaleName}.`,
+    image: null,
+    notation: {
+      abc: `X:1\nM:none\nL:1/4\nK:${key}\nV:1 clef=${clef}\n${noteToAbc(scaleNoteWithAccidental(note, true, signatureNotes), octave)}4`,
+      alt: `${correct} in ${clef} clef with the key signature of ${scaleName}`,
+    },
+    userAnswer: null,
+  };
+}
+
+function makeTonicTriadQuestion() {
+  const template = randomFrom(SCALE_TEMPLATES);
+  const [keyName, key, scaleNotes] = randomFrom([template.major, template.minor]);
+  const signature = KEY_SIGNATURES.find(({ key: signatureKey }) => signatureKey === keyName);
+  const mode = randomFrom(['key-signature', 'written-accidentals']);
+  const triadNotes = [scaleNotes[0], scaleNotes[2], scaleNotes[4]];
+  const expectedNotes = mode === 'key-signature' ? triadNotes.map((note) => note[0]) : triadNotes;
+  const correct = JSON.stringify({
+    signature: mode === 'key-signature' ? keySignatureValue(signature.accidental, signature.notes) : 'none',
+    notes: expectedNotes,
+  });
+  return {
+    id: `tonic-triad-${key.replaceAll('#', 'sharp').replaceAll('b', 'flat')}-${mode}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'tonic-triads',
+    grade: null,
+    answerType: 'tonic-triad',
+    triadMode: mode,
+    question: `Build the tonic triad of ${keyName}. ${mode === 'key-signature' ? 'Use the key signature.' : 'Use written accidentals — no key signature.'}`,
+    answer: correct,
+    correct,
+    options: [],
+    explanation: `${keyName} uses the tonic-triad notes ${triadNotes.map(formatPitchName).join(', ')}${mode === 'key-signature' ? '; the required accidentals belong in the key signature.' : '; write any required accidentals on the notes.'}`,
+    image: null,
+    notation: null,
+    triad: { keyName, key, triadNotes, signature },
+    userAnswer: null,
+  };
+}
+
 function getTimeSignatureGroups(signature) {
   const beatUnits = 32 / signature.bottom;
   if (signature.bottom === 8 && signature.top > 3 && signature.top % 3 === 0) {
@@ -726,6 +793,14 @@ function createIntervalsTest(questionCount) {
   ]);
 }
 
+function createPitchesTest(questionCount) {
+  return Array.from({ length: questionCount }, () => makePitchQuestion());
+}
+
+function createTonicTriadsTest(questionCount) {
+  return Array.from({ length: questionCount }, () => makeTonicTriadQuestion());
+}
+
 function createTimeSignaturesTest(questionCount) {
   return shuffle(Array.from({ length: questionCount }, (_, index) => (
     index % 2 === 0 ? makeTimeSignatureQuestion() : makeRestIdentificationQuestion()
@@ -751,7 +826,11 @@ function createTest(questionCount = Number($('test-length').value), category = s
   setActiveCategory(category);
   state.test = state.category === 'intervals'
     ? createIntervalsTest(questionCount)
-    : state.category === 'time-signatures'
+    : state.category === 'pitches'
+      ? createPitchesTest(questionCount)
+      : state.category === 'tonic-triads'
+        ? createTonicTriadsTest(questionCount)
+      : state.category === 'time-signatures'
       ? createTimeSignaturesTest(questionCount)
       : state.category === 'key-signatures'
         ? createKeySignaturesTest(questionCount)
@@ -774,7 +853,11 @@ function renderQuestion() {
   $('progress-bar').style.width = `${(position / state.test.length) * 100}%`;
   $('grade-badge').textContent = item.category === 'intervals'
     ? 'Intervals'
-    : item.category === 'key-signatures'
+    : item.category === 'pitches'
+      ? 'Pitch'
+      : item.category === 'tonic-triads'
+        ? 'Tonic triads'
+      : item.category === 'key-signatures'
       ? 'Key signatures'
     : item.category === 'time-signatures'
       ? 'Time signatures'
@@ -809,6 +892,8 @@ function renderQuestion() {
   answers.innerHTML = '';
   answers.classList.remove('correct', 'incorrect');
   answers.classList.toggle('interval-answers', item.category === 'intervals');
+  answers.classList.toggle('pitch-answers', item.category === 'pitches');
+  answers.classList.toggle('tonic-triad-answers', item.answerType === 'tonic-triad');
   answers.classList.toggle('time-signature-answers', item.category === 'time-signatures');
   answers.classList.toggle('key-signature-answers', item.answerType === 'key-signature');
   answers.classList.toggle('scale-identification-answers', item.answerType === 'scale-identification');
@@ -819,6 +904,10 @@ function renderQuestion() {
   }
   if (item.answerType === 'rest-identification') {
     renderRestValueAnswers(item);
+    return;
+  }
+  if (item.answerType === 'tonic-triad') {
+    renderTonicTriadAnswers(item);
     return;
   }
   item.options.forEach((option, index) => {
@@ -834,6 +923,9 @@ function renderQuestion() {
       button.classList.add('interval-answer-option');
       button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong><div class="answer-notation" role="img"></div>`;
       renderNotation(button.querySelector('.answer-notation'), makeIntervalOptionNotation(item, option), 240);
+    } else if (item.category === 'pitches') {
+      button.classList.add('pitch-answer-option');
+      button.innerHTML = `<strong>${letter}.</strong> ${option}`;
     } else if (item.category === 'time-signatures') {
       const [top, bottom] = option.split('/');
       const markType = option === '4/4' ? ' common-time' : option === '2/2' ? ' alla-breve' : '';
@@ -860,6 +952,149 @@ function renderKeySignaturePreview(element, accidental, notes) {
         ? `Key signature preview: ${formatKeySignatureAnswer(keySignatureValue(accidental, notes))}`
         : 'Empty staff: choose sharps, flats, or no accidentals',
   }, 520);
+}
+
+function selectedKeySignatureModifiers(accidental, notes) {
+  return accidental && accidental !== 'none'
+    ? notes.map((note) => `${accidental === 'sharp' ? '^' : '_'}${note}`).join(' ')
+    : '';
+}
+
+function makeTriadPreviewNotation(mode, accidental, signatureNotes, selections) {
+  const rootLetter = selections[0]?.letter || 'C';
+  const rootIndex = NOTE_LETTERS.indexOf(rootLetter);
+  const chordNotes = selections.map((selection, index) => {
+    if (!selection) return null;
+    const note = mode === 'key-signature' ? selection.letter : `${selection.letter}${selection.accidental || ''}`;
+    const octave = 4 + Math.floor((rootIndex + index * 2) / NOTE_LETTERS.length);
+    return noteToAbc(note, octave);
+  }).filter(Boolean);
+  const keyModifiers = mode === 'key-signature' ? selectedKeySignatureModifiers(accidental, signatureNotes) : '';
+  return {
+    abc: `X:1\nM:none\nL:1/4\nK:C${keyModifiers ? ` ${keyModifiers}` : ''}\nV:1 clef=treble\n${chordNotes.length ? `[${chordNotes.join('')}]4` : 'y4'}`,
+    alt: chordNotes.length ? 'Tonic triad being built in treble clef' : 'Empty treble-clef staff for building a tonic triad',
+  };
+}
+
+function formatTonicTriadAnswer(answer) {
+  if (!answer) return '';
+  let value;
+  try { value = JSON.parse(answer); } catch (error) { return answer; }
+  const signature = value.signature === 'none' ? 'No key signature' : formatKeySignatureAnswer(value.signature);
+  return `${signature}; notes: ${value.notes.map(formatPitchName).join(', ')}`;
+}
+
+function renderTonicTriadAnswers(item) {
+  const answers = $('answers');
+  const builder = document.createElement('div');
+  builder.className = 'tonic-triad-builder';
+  const preview = document.createElement('div');
+  preview.className = 'key-signature-preview';
+  preview.setAttribute('role', 'img');
+  const signatureControls = document.createElement('div');
+  signatureControls.className = 'triad-signature-controls';
+  const chordControls = document.createElement('section');
+  chordControls.className = 'triad-chord-controls';
+  chordControls.innerHTML = '<h3>Build the chord</h3>';
+  const slots = document.createElement('div');
+  slots.className = 'triad-note-slots';
+  const noteLetters = document.createElement('div');
+  noteLetters.className = 'triad-note-letters';
+  const accidentals = document.createElement('div');
+  accidentals.className = 'triad-accidental-controls';
+  let signatureNotesRow = null;
+  const selectedSignatureNotes = [];
+  const selections = [null, null, null];
+  let signatureAccidental = item.triadMode === 'written-accidentals' ? 'none' : null;
+  let activeSlot = 0;
+
+  const signatureReady = () => signatureAccidental === 'none' || selectedSignatureNotes.length > 0;
+  const update = () => {
+    renderNotation(preview, makeTriadPreviewNotation(item.triadMode, signatureAccidental, selectedSignatureNotes, selections), 520);
+    signatureControls.querySelectorAll('[data-signature-mode]').forEach((button) => {
+      const active = button.dataset.signatureMode === signatureAccidental;
+      button.classList.toggle('selected', active);
+      button.setAttribute('aria-checked', String(active));
+    });
+    signatureControls.querySelectorAll('[data-signature-note]').forEach((button) => {
+      const active = selectedSignatureNotes.includes(button.dataset.signatureNote);
+      button.classList.toggle('selected', active);
+      button.setAttribute('aria-pressed', String(active));
+      button.textContent = `${button.dataset.signatureNote}${signatureAccidental === 'sharp' ? '♯' : '♭'}`;
+    });
+    if (signatureNotesRow) signatureNotesRow.hidden = !signatureAccidental || signatureAccidental === 'none';
+    const canBuildChord = item.triadMode === 'written-accidentals' || signatureReady();
+    chordControls.hidden = !canBuildChord;
+    slots.replaceChildren();
+    ['Root (1)', 'Third (3)', 'Fifth (5)'].forEach((label, index) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'triad-slot-button';
+      button.classList.toggle('selected', activeSlot === index);
+      button.textContent = selections[index] ? `${label}: ${formatPitchName(`${selections[index].letter}${item.triadMode === 'written-accidentals' ? selections[index].accidental || '' : ''}`)}` : label;
+      button.addEventListener('click', () => { activeSlot = index; update(); });
+      slots.appendChild(button);
+    });
+    noteLetters.replaceChildren();
+    NOTE_LETTERS.forEach((letter) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'key-note-button'; button.textContent = letter;
+      button.classList.toggle('selected', selections[activeSlot]?.letter === letter);
+      button.addEventListener('click', () => {
+        selections[activeSlot] = { letter, accidental: selections[activeSlot]?.accidental || '' };
+        update();
+      });
+      noteLetters.appendChild(button);
+    });
+    accidentals.replaceChildren();
+    if (item.triadMode === 'written-accidentals') {
+      [['b', '♭'], ['', '♮'], ['#', '♯']].forEach(([value, label]) => {
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'key-mode-button'; button.textContent = label;
+        button.classList.toggle('selected', selections[activeSlot]?.accidental === value);
+        button.disabled = !selections[activeSlot];
+        button.addEventListener('click', () => { if (selections[activeSlot]) selections[activeSlot].accidental = value; update(); });
+        accidentals.appendChild(button);
+      });
+    }
+    const selectedNotes = selections.map((selection) => selection && (item.triadMode === 'key-signature' ? selection.letter : `${selection.letter}${selection.accidental || ''}`));
+    state.selected = canBuildChord && selectedNotes.every(Boolean)
+      ? JSON.stringify({ signature: item.triadMode === 'key-signature' ? keySignatureValue(signatureAccidental, selectedSignatureNotes) : 'none', notes: selectedNotes })
+      : null;
+    $('next-button').disabled = !state.selected;
+    $('next-button').textContent = state.selected ? 'Check answer' : item.triadMode === 'key-signature' && !canBuildChord ? 'Build the key signature first' : 'Build the tonic triad';
+  };
+
+  if (item.triadMode === 'key-signature') {
+    const modes = document.createElement('div');
+    modes.className = 'key-signature-modes';
+    [['sharp', '♯ Sharps'], ['flat', '♭ Flats'], ['none', 'No accidentals']].forEach(([type, label]) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'key-mode-button'; button.dataset.signatureMode = type; button.textContent = label;
+      button.setAttribute('role', 'radio'); button.setAttribute('aria-checked', 'false');
+      button.addEventListener('click', () => { signatureAccidental = type; selectedSignatureNotes.length = 0; update(); });
+      modes.appendChild(button);
+    });
+    const notes = document.createElement('div');
+    notes.className = 'key-signature-notes';
+    signatureNotesRow = notes;
+    NOTE_LETTERS.forEach((note) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'key-note-button'; button.dataset.signatureNote = note;
+      button.textContent = note;
+      button.addEventListener('click', () => {
+        const selectedIndex = selectedSignatureNotes.indexOf(note);
+        if (selectedIndex >= 0) selectedSignatureNotes.splice(selectedIndex, 1);
+        else selectedSignatureNotes.push(note);
+        update();
+      });
+      notes.appendChild(button);
+    });
+    signatureControls.append(modes, notes);
+  }
+  chordControls.append(slots, noteLetters, accidentals);
+  builder.append(preview, signatureControls, chordControls);
+  answers.appendChild(builder);
+  update();
 }
 
 function renderKeySignatureAnswers() {
@@ -1006,10 +1241,16 @@ function submitAnswer() {
     document.querySelectorAll('.rest-value-builder button').forEach((button) => { button.disabled = true; });
     document.querySelector('.rest-value-builder').classList.add(correct ? 'correct' : 'incorrect');
   }
+  if (item.answerType === 'tonic-triad') {
+    document.querySelectorAll('.tonic-triad-builder button').forEach((button) => { button.disabled = true; });
+    document.querySelector('.tonic-triad-builder').classList.add(correct ? 'correct' : 'incorrect');
+  }
   const formattedCorrect = item.answerType === 'key-signature'
     ? formatKeySignatureAnswer(item.correct)
     : item.answerType === 'rest-identification'
       ? formatRestAnswers(item.correct)
+      : item.answerType === 'tonic-triad'
+        ? formatTonicTriadAnswer(item.correct)
       : item.correct;
   $('feedback').textContent = correct ? 'Correct — well done.' : `Not quite. The correct answer is “${formattedCorrect}”.`;
   $('feedback').className = `feedback ${correct ? 'good' : 'bad'}`;
@@ -1044,13 +1285,17 @@ function renderResults() {
     card.className = 'review-item';
     const label = item.category === 'intervals'
       ? 'Intervals'
-      : item.category === 'key-signatures'
+      : item.category === 'pitches'
+        ? 'Pitch'
+        : item.category === 'tonic-triads'
+          ? 'Tonic triads'
+        : item.category === 'key-signatures'
         ? 'Key signatures'
       : item.category === 'time-signatures'
         ? 'Time signatures'
         : `Grade ${item.grade}`;
-    const userAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.userAnswer) : item.answerType === 'rest-identification' ? formatRestAnswers(item.userAnswer) : item.userAnswer;
-    const correctAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.correct) : item.answerType === 'rest-identification' ? formatRestAnswers(item.correct) : item.correct;
+    const userAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.userAnswer) : item.answerType === 'rest-identification' ? formatRestAnswers(item.userAnswer) : item.answerType === 'tonic-triad' ? formatTonicTriadAnswer(item.userAnswer) : item.userAnswer;
+    const correctAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.correct) : item.answerType === 'rest-identification' ? formatRestAnswers(item.correct) : item.answerType === 'tonic-triad' ? formatTonicTriadAnswer(item.correct) : item.correct;
     card.innerHTML = `<h3>${label} · ${item.question}</h3>${item.notation ? '<div class="review-notation" role="img"></div>' : item.image ? `<img class="review-image" src="${item.image}" alt="Musical notation for the question" />` : ''}<p><strong>Your answer:</strong> ${userAnswer || 'No answer'}</p><p><strong>Correct answer:</strong> ${correctAnswer}</p><p class="review-explanation"><strong>Explanation:</strong> ${item.explanation}</p>`;
     if (item.notation) renderNotation(card.querySelector('.review-notation'), item.notation, 250);
     review.appendChild(card);

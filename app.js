@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 1.0.0';
+const APP_VERSION = 'Version 1.1.0';
 
 const RAW_BANK = {
   1: [
@@ -401,7 +401,7 @@ function makeRhythmToken(value, clef) {
 }
 
 function makeRhythmBar(groups, clef, allowSemiquavers) {
-  return groups.flatMap((group) => {
+  return groups.map((group) => {
     const templates = (RHYTHM_GROUP_TEMPLATES[group] || [[group]]).filter((template) =>
       allowSemiquavers || !template.includes(2)
     );
@@ -416,7 +416,7 @@ function restDurationFromValue(value) {
 }
 
 function makeRestIdentificationBar(groups, clef, allowSemiquavers) {
-  const descriptors = groups.flatMap((group) => {
+  const descriptors = groups.map((group) => {
     const templates = (RHYTHM_GROUP_TEMPLATES[group] || [[group]]).filter((template) => allowSemiquavers || !template.includes(2));
     return randomFrom(templates).map((units) => {
       const value = RHYTHM_VALUES.find((candidate) => candidate.units === units);
@@ -424,7 +424,7 @@ function makeRestIdentificationBar(groups, clef, allowSemiquavers) {
     });
   });
   const restCount = randomFrom([1, 2]);
-  shuffle(descriptors).slice(0, restCount).forEach((descriptor) => { descriptor.missing = true; });
+  shuffle(descriptors.flat()).slice(0, restCount).forEach((descriptor) => { descriptor.missing = true; });
   return descriptors;
 }
 
@@ -437,14 +437,14 @@ function makeTimeSignatureNotation(signature) {
   const bars = Array.from({ length: barCount }, () => makeRhythmBar(groups, clef, allowSemiquavers));
 
   return {
-    abc: `X:1\nM:${signature.label}\nL:1/8\nK:C\nV:1 clef=${clef}\n${bars.map((bar) => bar.join(' ')).join('|')}||`,
+    abc: `X:1\nM:${signature.label}\nL:1/8\nK:C\nV:1 clef=${clef}\n${bars.map((bar) => bar.map((group) => group.join('')).join(' ')).join('|')}||`,
     alt: `${barCount} bars of rhythm in ${clef === 'treble' ? 'treble' : 'bass'} clef`,
     timeSignatureNotation: true,
     hideTimeSignature: true,
     groups,
     barUnits,
     barCount,
-    tokenCount: bars.flat().length,
+    tokenCount: bars.flat(2).length,
     lineBreaks: [2],
   };
 }
@@ -506,12 +506,12 @@ function makeRestIdentificationQuestion() {
   const allowSemiquavers = signature.bottom === 8;
   const bars = Array.from({ length: 2 }, () => makeRestIdentificationBar(groups, clef, allowSemiquavers));
   let marker = 0;
-  bars.forEach((bar) => bar.filter((descriptor) => descriptor.missing).forEach((descriptor) => { descriptor.id = ++marker; }));
-  const rests = bars.flatMap((bar) => bar.filter((descriptor) => descriptor.missing).map((descriptor) => ({ ...restDurationFromValue(descriptor.value), id: descriptor.id })));
-  const abcBars = bars.map((bar) => bar.map((descriptor) => {
+  bars.forEach((bar) => bar.flat().filter((descriptor) => descriptor.missing).forEach((descriptor) => { descriptor.id = ++marker; }));
+  const rests = bars.flat(2).filter((descriptor) => descriptor.missing).map((descriptor) => ({ ...restDurationFromValue(descriptor.value), id: descriptor.id }));
+  const abcBars = bars.map((bar) => bar.map((group) => group.map((descriptor) => {
     if (!descriptor.missing) return descriptor.token;
     return `"${String.fromCharCode(9311 + descriptor.id)}"y${descriptor.value.duration}`;
-  }).join(' '));
+  }).join('')).join(' '));
   const correct = JSON.stringify(rests.map(({ units, dotted }) => ({ units, dotted })));
   return {
     id: `rest-identification-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
@@ -662,14 +662,15 @@ function createIntervalsTest(questionCount) {
 }
 
 function createTimeSignaturesTest(questionCount) {
-  const timeSignatureCount = Math.floor(questionCount * 0.3);
-  const questions = Array.from({ length: timeSignatureCount }, () => (
-    Math.random() < 0.5 ? makeTimeSignatureQuestion() : makeRestIdentificationQuestion()
-  ));
-  for (let index = timeSignatureCount; index < questionCount; index += 1) {
-    questions.push((index - timeSignatureCount) % 2 === 0 ? makeKeySignatureQuestion() : makeScaleQuestion());
-  }
-  return shuffle(questions);
+  return shuffle(Array.from({ length: questionCount }, (_, index) => (
+    index % 2 === 0 ? makeTimeSignatureQuestion() : makeRestIdentificationQuestion()
+  )));
+}
+
+function createKeySignaturesTest(questionCount) {
+  return shuffle(Array.from({ length: questionCount }, (_, index) => (
+    index % 2 === 0 ? makeKeySignatureQuestion() : makeScaleQuestion()
+  )));
 }
 
 function setActiveCategory(category) {
@@ -687,6 +688,8 @@ function createTest(questionCount = Number($('test-length').value), category = s
     ? createIntervalsTest(questionCount)
     : state.category === 'time-signatures'
       ? createTimeSignaturesTest(questionCount)
+      : state.category === 'key-signatures'
+        ? createKeySignaturesTest(questionCount)
       : createTermsTest(questionCount);
   state.current = 0;
   state.score = 0;

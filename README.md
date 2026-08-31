@@ -2,7 +2,7 @@
 
 A simple, strictly client-side mock-test application for ABRSM Music Theory Grades 1–3.
 
-Current release: **1.0.0**
+Current release: **1.1.0**
 
 ## How to use
 
@@ -14,8 +14,8 @@ Open [`index.html`](./index.html) directly in a web browser.
 
 - Terms, signs, and notation tests contain 15 questions, with five randomly selected from each grade.
 - Interval tests generate four-choice interval questions from the runtime interval matrix.
-- Time-signature and key-signature tests contain 5, 10, or 15 questions, mixed randomly.
-- Time-signature questions make up no more than 30% of that category; the remaining questions cover key-signature building and scale identification.
+- Time-signature and key-signature practice are separate categories, each with 5, 10, or 15 questions.
+- Time-signature practice mixes meter recognition with missing-rest questions; key-signature practice mixes key-signature building with scale identification.
 - Some time-signature questions hide two to four rests across two bars and ask the learner to identify each rest’s duration and dotted state.
 - Choice-based questions have four answer choices: one correct answer and three distractors.
 - Questions are answered one at a time.

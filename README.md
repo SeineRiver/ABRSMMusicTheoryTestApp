@@ -2,6 +2,8 @@
 
 A simple, strictly client-side mock-test application for ABRSM Music Theory Grades 1–3.
 
+Current release: **1.0.0**
+
 ## How to use
 
 No local server, build step, or package installation is required.
@@ -50,6 +52,7 @@ Notation images used by both the app and the PDF are stored under [`assets/`](./
 
 ```text
 index.html                         Application markup
+privacy-policy.html                Privacy Policy
 styles.css                         Application styling
 app.js                             Question bank and test logic
 assets/                            Musical notation images

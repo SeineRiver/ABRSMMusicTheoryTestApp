@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="115" viewBox="0 0 280 115" role="img" aria-labelledby="title">
+  <title id="title">Slur joining notes in one bow stroke</title><rect width="280" height="115" fill="white"/>
+  <path d="M18 48h244M18 58h244M18 68h244M18 78h244M18 88h244" stroke="#172b4d" stroke-width="1.5"/>
+  <ellipse cx="84" cy="73" rx="11" ry="7.5" transform="rotate(-18 84 73)" fill="#172b4d"/><path d="M94 71V30" stroke="#172b4d" stroke-width="2.5"/>
+  <ellipse cx="144" cy="63" rx="11" ry="7.5" transform="rotate(-18 144 63)" fill="#172b4d"/><path d="M154 61V20" stroke="#172b4d" stroke-width="2.5"/>
+  <ellipse cx="204" cy="73" rx="11" ry="7.5" transform="rotate(-18 204 73)" fill="#172b4d"/><path d="M214 71V30" stroke="#172b4d" stroke-width="2.5"/>
+  <path d="M69 31c34-20 103-20 150 0" fill="white" stroke="#172b4d" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

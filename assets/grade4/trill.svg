@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="115" viewBox="0 0 220 115" role="img" aria-labelledby="title">
+  <title id="title">Trill sign over a note</title><rect width="220" height="115" fill="white"/>
+  <path d="M18 48h184M18 58h184M18 68h184M18 78h184M18 88h184" stroke="#172b4d" stroke-width="1.5"/>
+  <ellipse cx="110" cy="73" rx="11" ry="7.5" transform="rotate(-18 110 73)" fill="#172b4d"/><path d="M120 71V30" stroke="#172b4d" stroke-width="2.5"/>
+  <text x="89" y="29" fill="#172b4d" font-family="Georgia, serif" font-size="31" font-style="italic">tr</text>
+</svg>

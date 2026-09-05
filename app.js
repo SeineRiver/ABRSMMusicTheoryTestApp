@@ -5,15 +5,23 @@ const APP_VERSION = 'Version 1.3.0';
 const RAW_BANK = {
   1: [
     ['Accelerando means:', 'Gradually getting quicker'], ['Adagio means:', 'Slow'], ['Allegretto means:', 'Fairly quick—but not as quick as allegro'], ['Allegro means:', 'Quick'], ['Andante means:', 'At a walking pace'], ['Cantabile means:', 'In a singing style'], ['Crescendo means:', 'Gradually getting louder'], ['Da capo means:', 'Repeat from the beginning'], ['Dal segno means:', 'Repeat from the sign'], ['Decrescendo means:', 'Gradually getting quieter'], ['Diminuendo means:', 'Gradually getting quieter'], ['Fine means:', 'The end'], ['f (forte) means:', 'Loud'], ['ff (fortissimo) means:', 'Very loud'], ['Legato means:', 'Smoothly'], ['Lento means:', 'Slow'], ['Mezzo means:', 'Half'], ['Maestoso means:', 'Majestic'], ['mf (mezzo forte) means:', 'Moderately loud'], ['mp (mezzo piano) means:', 'Moderately quiet'], ['Moderato means:', 'Moderately'], ['p (piano) means:', 'Quiet'], ['pp (pianissimo) means:', 'Very quiet'], ['Poco means:', 'A little'], ['Rallentando (or rall.) means:', 'Gradually getting slower'], ['Ritardando (or rit.) means:', 'Gradually getting slower'], ['Ritenuto (or rit.) means:', 'Held back'], ['Staccato (or stacc.) means:', 'Detached'], ['Tempo means:', 'Speed/time'], ['These signs above and below the notes are:', 'Accents', 'assets/grade1/image5.png'], ['The dots above the notes are:', 'Staccato marks', 'assets/grade1/image6.png'], ['The sign above the last note means:', 'A pause', 'assets/grade1/image7.png'], ['The sign above these notes means:', 'Tie', 'assets/grade1/image8.png'], ['The two dots at the stave end mean:', 'Repeat last section', 'assets/grade1/image9.png'],
-    ['A tempo means:', "Return to the former speed ('in time')"], ['Allegro moderato means:', 'Moderately quick'], ['Da capo al fine (D.C. al fine) means:', "From the beginning until 'fine'"], ['MM. crotchet = 96 means:', "Maelzel's metronome, 96 beats per minute"], ['Pause or fermata means:', 'Hold for longer than written'], ['Ottava sign (8va) means:', 'Play one octave higher or lower than written']
+    ['A tempo means:', "Return to the former speed ('in time')"], ['Al fine means:', 'Until the end'], ['Allegro moderato means:', 'Moderately quick'], ['Da capo al fine (D.C. al fine) means:', "From the beginning until 'fine'"], ['MM. crotchet = 96 means:', "Maelzel's metronome, 96 beats per minute"], ['Pause or fermata means:', 'Hold for longer than written'], ['Ottava sign (8va) means:', 'Play one octave higher or lower than written'], ['Poco a poco means:', 'Little by little']
   ],
   2: [
     ['a means:', 'In the style of'], ['a, alla means:', 'In the manner of'], ['Allargando means:', 'Broadening'], ['Andantino means:', 'Slightly faster than andante'], ['Assai means:', 'Very'], ['Con, col means:', 'With'], ['Dolce means:', 'Sweet'], ['e, ed means:', 'And'], ['Espressivo means:', 'Expressive'], ['fp (forte-piano) means:', 'Loud then immediately quiet'], ['Giocoso means:', 'Playful'], ['Grave means:', 'Very slow, solemn'], ['Grazioso means:', 'Graceful'], ['Larghetto means:', 'Rather slow (but not as slow as largo)'], ['Largo means:', 'Slow'], ['Ma means:', 'But'], ['Maestoso means:', 'Majestic'], ['Meno means:', 'Less'], ['Molto means:', 'Much'], ['Mosso, moto means:', 'Movement'], ['Non means:', 'Not'], ['Piu means:', 'More'], ['Presto means:', 'Fast'], ['Senza means:', 'Without'], ['sf, sfz (sforzando) means:', 'Forced, accented'], ['Simile (or sim.) means:', 'In the same way'], ['Sostenuto means:', 'Sustained'], ['Tenuto means:', 'Held'], ['Troppo means:', 'Too much'], ['Vivace, vivo means:', 'Lively, quick'], ['Dots inside the slur mark mean:', 'Semi-staccato', 'assets/grade2/image5.png'], ['These wedge shapes above and below the notes mean:', 'Staccatissimo (super-staccato)', 'assets/grade2/image6.png'], ['The lines above and below these notes mean:', 'Tenuto (held with slight pressure)', 'assets/grade2/image7.png'],
-    ['Con moto means:', 'With movement'], ['Non troppo means:', 'Not too much'], ['Piu mosso means:', 'More speed (faster)'], ['Accent sign means:', 'Play strongly'], ['Mezzo-staccato means:', 'Moderately short and detached'], ['Marcato sign means:', 'A strong accent'], ['Staccatissimo means:', 'Extremely short and detached']
+    ['Alla marcia means:', 'In the style of a march'], ['Con moto means:', 'With movement'], ['Meno mosso means:', 'Less movement (slower)'], ['Non troppo means:', 'Not too much'], ['Piu mosso means:', 'More speed (faster)'], ['Accent sign means:', 'Play strongly'], ['Mezzo-staccato means:', 'Moderately short and detached'], ['Marcato sign means:', 'A strong accent'], ['Staccatissimo means:', 'Extremely short and detached']
   ],
   3: [
     ['adagietto means:', 'Rather slow'], ['ad libitum, ad lib. means:', 'Play freely'], ['Agitato means:', 'Agitated'], ['Alla breve means:', 'With a minim beat'], ['Amore means:', 'Love'], ['Anima means:', 'Soul, spirit'], ['Animato means:', 'Animated, lively'], ['Ben means:', 'Well'], ['Brio means:', 'Vigour'], ['Comodo means:', 'Convenient'], ['Deciso means:', 'With determination'], ['Delicato means:', 'Delicate'], ['Energico means:', 'Energetic'], ['Forza means:', 'Force'], ['Largamente means:', 'Broadly'], ['Leggiero means:', 'Light, nimble'], ['Marcato, marc. means:', 'Emphatic, accented'], ['Marziale means:', 'In a military style'], ['Mesto means:', 'Sad'], ['Pesante means:', 'Heavy'], ['Prima, primo means:', 'First'], ['Risoluto means:', 'With determination'], ['Ritmico means:', 'Rhythmically'], ['Rubato, tempo rubato means:', 'With some freedom of time'], ['Scherzando, scherzoso means:', 'Playful, joking'], ['Seconda, secondo means:', 'Second'], ['Semplice means:', 'Simple, plain'], ['Sempre means:', 'Always'], ['Stringendo means:', 'Gradually getting faster'], ['Subito means:', 'Suddenly'], ['Tanto means:', 'So much'], ['Tranquillo means:', 'Calm'], ['Triste, tristamente means:', 'Sad, sorrowful'], ['Volta means:', 'Time'], ['What is the meaning of the two dots at the end of the stave?', 'Repeat previous section', 'assets/grade3/image5.png'], ['What does the line above the notes mean?', 'The slur', 'assets/grade3/image6.png'], ['What is the meaning of the dots above these notes?', 'Staccato marks', 'assets/grade3/image7.png'], ['What is the name of the line joining these two notes?', 'Tie', 'assets/grade3/image8.png'], ['What does a crotchet = 96 mean?', '96 crotchet beats per minute', 'assets/grade3/image9.png'],
-    ['Amoroso means:', 'Loving'], ['Ben marcato means:', 'Well marked'], ['Con anima means:', 'With feeling, with spirit'], ['Con brio means:', 'With vigour'], ['Con forza means:', 'With force']
+    ['Amoroso means:', 'Loving'], ['Ben marcato means:', 'Well marked'], ['Con anima means:', 'With feeling, with spirit'], ['Con brio means:', 'With vigour'], ['Con forza means:', 'With force'], ['Prestissimo means:', 'Very fast'], ['Sforzando, sforzato, sfz, sf means:', 'Forced, accented']
+  ],
+  4: [
+    ['Affettuoso means:', 'Tenderly'], ['Affrettando means:', 'Hurrying'], ['Amabile means:', 'Pleasant, amiable'], ['Appassionato means:', 'With passion'], ['Calando means:', 'Getting softer, dying away'], ['Cantando means:', 'Singing'], ['Come means:', 'As, similar to'], ['Facile means:', 'Easy'], ['Fuoco means:', 'Fire'], ['Giusto means:', 'Proper, exact'], ['L’istesso / L\'istesso tempo means:', 'At the same speed'], ['Morendo means:', 'Dying away'], ['Niente means:', 'Nothing'], ['Nobilmente means:', 'Nobly'], ['Perdendosi means:', 'Dying away'], ['Possibile means:', 'Possible'], ['Quasi means:', 'As if, resembling'], ['Sonoro means:', 'Resonant, with rich tone'], ['Sopra means:', 'Above'], ['Sotto means:', 'Below'], ['Veloce means:', 'Swift'], ['Voce means:', 'Voice'],
+    ['Alla breve means:', 'Two minims (half notes) per bar'], ['Assai means:', 'Very'], ['Come prima means:', 'As before'], ['Comodo / Tempo comodo means:', 'Convenient, comfortable, at a comfortable speed'], ['Con brio means:', 'With vigour, spirit'], ['Deciso means:', 'With determination, decisive'], ['Larghetto means:', 'Less slow than largo'], ['Mesto means:', 'Sad, mournful'], ['Misterioso means:', 'Mysterious'], ['Ritmico means:', 'Rhythmic'], ['Rubato / Tempo rubato means:', 'With some freedom of time/rhythm'], ['Sempre means:', 'Always'], ['Stringendo means:', 'Gradually getting faster'],
+    ['Arco means:', 'Play with the bow (after pizzicato)'], ['Pizzicato means:', 'Plucked'], ['Con sordini (con sord.) / avec sourdines means:', 'With mutes'], ['Senza sordini / sans sourdines means:', 'Without mutes'], ['Sul G / Sul D means:', 'Play on the specified string'], ['The down-bow and up-bow signs show:', 'Direction of the bow stroke', 'assets/grade4/bow-directions.svg'], ['A slur over string notes means:', 'Play the notes in one bow stroke (legato)', 'assets/grade4/string-slur.svg'],
+    ['Una corda means:', 'Press the left pedal (softer sound)'], ['Tre corda means:', 'Release the left pedal'], ['This pedal line means:', 'Indicates when to depress and release the sustain (right) pedal', 'assets/grade4/pedal-line.svg'],
+    ['The tr sign means:', 'Trill: rapid alternation between the note and the note above', 'assets/grade4/trill.svg'], ['This turn sign means:', 'Turn: note above, main note, note below, main note', 'assets/grade4/turn.svg'], ['This upper mordent sign means:', 'Upper mordent: main note, note above, main note quickly', 'assets/grade4/upper-mordent.svg'], ['This lower mordent sign means:', 'Lower mordent: main note, note below, main note quickly', 'assets/grade4/lower-mordent.svg'], ['This slashed grace note means:', 'Acciaccatura: a crushed grace note played as quickly as possible before the main note', 'assets/grade4/acciaccatura.svg'], ['This unslashed grace note means:', 'Appoggiatura: an expressive grace note that takes a fixed portion of the main note\'s value', 'assets/grade4/appoggiatura.svg'],
+    ['a means:', 'To, at'], ['Animé means:', 'Animated, lively'], ['Assez means:', 'Enough, sufficiently'], ['Avec means:', 'With'], ['Cedez means:', 'Yield, relax the speed'], ['Douce means:', 'Sweet'], ['En dehors means:', 'Prominent'], ['Et means:', 'And'], ['Legerement means:', 'Light'], ['Lent means:', 'Slow'], ['Mais means:', 'But'], ['Moins means:', 'Less'], ['Modéré means:', 'At a moderate speed'], ['Non means:', 'Not'], ['Peu means:', 'Little'], ['Plus means:', 'More'], ['Presser means:', 'Hurry'], ['Ralentir means:', 'Slow down'], ['Retenu means:', 'Held back'], ['Sans means:', 'Without'], ['Tres means:', 'Very'], ['Un, une means:', 'One'], ['Vif means:', 'Lively'], ['Vite means:', 'Quick']
   ]
 };
 
@@ -165,7 +173,7 @@ const BANK = Object.fromEntries(
       acceptedAnswers: [answer],
       explanation: buildExplanation(question, answer),
       image: image || EXAMPLE_IMAGES[question.toLowerCase()] || null,
-      source: 'ABRSM Terms & Signs Grades 1–3 PDF'
+      source: Number(grade) === 4 ? 'Grade 4 Italian and French Terms & Signs PPSX presentations' : 'ABRSM Terms & Signs Grades 1–3 PDF'
     }))
   ])
 );
@@ -173,7 +181,8 @@ const BANK = Object.fromEntries(
 // The study-bank page reads this same normalized data, keeping it in sync with the test.
 window.ABRSM_QUESTION_BANK = BANK;
 
-const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: 'terms' };
+const TIMER_SECONDS = 20;
+const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: 'terms', grade: 3, timerEnabled: false, timerId: null, timerDeadline: null };
 const $ = (id) => document.getElementById(id);
 document.querySelectorAll('[data-app-version]').forEach((element) => { element.textContent = APP_VERSION; });
 const NOTE_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -182,11 +191,43 @@ const SAFE_ROOT_OCTAVES = {
   treble: { C: [4, 5], D: [4, 5], E: [4, 5], F: [4, 5], G: [4, 5], A: [4, 5], B: [4, 5] },
   bass: { C: [3, 4], D: [3, 4], E: [2, 3], F: [2, 3], G: [2, 3], A: [2, 3], B: [2, 3] },
 };
+// The app keeps the syllabus data separate from question generation so that
+// later Grade 4/5 content can be added without changing existing generators.
+const CURRICULUM = Object.freeze({
+  keyGrades: Object.freeze({
+    'C major': 1, 'G major': 1, 'D major': 1, 'F major': 1,
+    'A major': 2, 'B♭ major': 2, 'E♭ major': 2,
+    'A minor': 2, 'E minor': 2, 'D minor': 2,
+    'E major': 3, 'A♭ major': 3,
+    'B minor': 3, 'F♯ minor': 3, 'C♯ minor': 3, 'G minor': 3, 'C minor': 3, 'F minor': 3,
+  }),
+  timeSignatureGrades: Object.freeze({
+    '2/4': 1, '3/4': 1, '4/4': 1,
+    '2/2': 2, '3/2': 2, '4/2': 2, '3/8': 2,
+    '6/8': 3, '9/8': 3, '12/8': 3,
+  }),
+  questionFormGrades: Object.freeze({
+    namedInterval: 3,
+    intervalRecognition: 3,
+    timeSignatureClassification: 4,
+  }),
+  categoryMinimumGrades: Object.freeze({
+    terms: 1,
+    intervals: 3,
+    pitches: 1,
+    'tonic-triads': 1,
+    'time-signatures': 1,
+    'key-signatures': 1,
+  }),
+});
 const TIME_SIGNATURES = [
   { top: 2, bottom: 4 }, { top: 3, bottom: 4 }, { top: 4, bottom: 4 },
   { top: 2, bottom: 2 }, { top: 3, bottom: 2 }, { top: 4, bottom: 2 },
   { top: 3, bottom: 8 }, { top: 6, bottom: 8 }, { top: 9, bottom: 8 }, { top: 12, bottom: 8 },
-].map((signature) => Object.freeze({ ...signature, label: `${signature.top}/${signature.bottom}` }));
+].map((signature) => {
+  const label = `${signature.top}/${signature.bottom}`;
+  return Object.freeze({ ...signature, label, grade: CURRICULUM.timeSignatureGrades[label] });
+});
 const TIME_SIGNATURE_CLASSES = ['Simple duple', 'Simple triple', 'Simple quadruple', 'Compound duple', 'Compound triple', 'Compound quadruple'];
 const CONFUSING_TIME_SIGNATURES = new Map([
   ['4/4', '2/2'], ['2/2', '4/4'],
@@ -207,7 +248,7 @@ const KEY_SIGNATURES = [
   ['E♭ major', 'C minor', 'flat', ['B', 'E', 'A']],
   ['A♭ major', 'F minor', 'flat', ['B', 'E', 'A', 'D']],
 ].flatMap(([major, minor, accidental, notes]) => [
-  { key: major, accidental, notes }, { key: minor, accidental, notes },
+  { key: major, accidental, notes, grade: CURRICULUM.keyGrades[major] }, { key: minor, accidental, notes, grade: CURRICULUM.keyGrades[minor] },
 ]);
 const SCALE_TEMPLATES = [
   { major: ['C major', 'C', ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C']], minor: ['A minor', 'Am', ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'A']] },
@@ -225,9 +266,9 @@ const SCALE_QUESTIONS = SCALE_TEMPLATES.flatMap(({ major, minor }) => {
   const [minorName, minorKey, minorNotes] = minor;
   const minorTonic = minorName.replace(/ minor$/, '');
   return [
-    { name: majorName, answer: majorName, equivalent: minorName, key: majorKey, notes: majorNotes, type: 'major' },
-    { name: `${minorTonic} harmonic minor`, answer: `${minorTonic} harmonic minor`, equivalent: majorName, key: minorKey, notes: minorNotes, type: 'harmonic-minor' },
-    { name: `${minorTonic} melodic minor`, answer: `${minorTonic} melodic minor`, equivalent: majorName, key: minorKey, notes: minorNotes, type: 'melodic-minor' },
+    { name: majorName, answer: majorName, equivalent: minorName, key: majorKey, notes: majorNotes, type: 'major', grade: CURRICULUM.keyGrades[majorName] },
+    { name: `${minorTonic} harmonic minor`, answer: `${minorTonic} harmonic minor`, equivalent: majorName, key: minorKey, notes: minorNotes, type: 'harmonic-minor', grade: Math.max(2, CURRICULUM.keyGrades[minorName]) },
+    { name: `${minorTonic} melodic minor`, answer: `${minorTonic} melodic minor`, equivalent: majorName, key: minorKey, notes: minorNotes, type: 'melodic-minor', grade: Math.max(3, CURRICULUM.keyGrades[minorName]) },
   ];
 });
 const RHYTHM_VALUES = [
@@ -272,7 +313,7 @@ function shuffle(list) {
 
 function makeQuestion(grade, entry) {
   const { answer: correct } = entry;
-  const distractors = shuffle(BANK[grade].map((item) => item.answer).filter((answer) => answer !== correct)).slice(0, 3);
+  const distractors = shuffle([...new Set(BANK[grade].map((item) => item.answer).filter((answer) => answer !== correct))]).slice(0, 3);
   return { ...entry, correct, options: shuffle([correct, ...distractors]), userAnswer: null };
 }
 
@@ -384,7 +425,7 @@ function makeIntervalQuestion(root, interval) {
   return {
     id: `interval-${root}-${interval.id}`,
     category: 'intervals',
-    grade: null,
+    grade: CURRICULUM.questionFormGrades.namedInterval,
     question: `What is the ${interval.name} above the following note?`,
     answer: correct,
     correct,
@@ -439,7 +480,7 @@ function makeIntervalRecognitionQuestion() {
   return {
     id: `interval-recognition-${presentation}-${interval.id}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'intervals',
-    grade: null,
+    grade: Math.max(CURRICULUM.questionFormGrades.intervalRecognition, CURRICULUM.keyGrades[scaleName]),
     answerType: 'interval-identification',
     question: 'Name this interval.',
     answer: correct,
@@ -482,7 +523,7 @@ function makePitchQuestion() {
   return {
     id: `pitch-${key}-${note}-${clef}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'pitches',
-    grade: null,
+    grade: CURRICULUM.keyGrades[scaleName],
     question: 'Name this note.',
     answer: correct,
     correct,
@@ -511,7 +552,7 @@ function makeTonicTriadQuestion() {
   return {
     id: `tonic-triad-${key.replaceAll('#', 'sharp').replaceAll('b', 'flat')}-${mode}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'tonic-triads',
-    grade: null,
+    grade: CURRICULUM.keyGrades[keyName],
     answerType: 'tonic-triad',
     triadMode: mode,
     question: `Build the tonic triad of ${keyName}. ${mode === 'key-signature' ? 'Use the key signature.' : 'Use written accidentals — no key signature.'}`,
@@ -602,6 +643,7 @@ function makeTimeSignatureNotation(signature) {
   const allowSemiquavers = signature.bottom === 8;
   const barCount = 3;
   const bars = Array.from({ length: barCount }, () => makeRhythmBar(groups, clef, allowSemiquavers));
+  const hasTriplets = bars.flat(2).some((token) => token.includes('(3'));
 
   return {
     abc: `X:1\nM:${signature.label}\nL:1/8\nK:C\nV:1 clef=${clef}\n${bars.map((bar) => bar.map((group) => group.join('')).join(' ')).join('|')}||`,
@@ -612,12 +654,14 @@ function makeTimeSignatureNotation(signature) {
     barUnits,
     barCount,
     tokenCount: bars.flat(2).length,
+    grade: Math.max(signature.grade, hasTriplets ? 2 : 1),
     lineBreaks: [2],
   };
 }
 
 function makeTimeSignatureQuestion() {
   const signature = randomFrom(TIME_SIGNATURES);
+  const notation = makeTimeSignatureNotation(signature);
   const compound = signature.bottom === 8 && signature.top > 3 && signature.top % 3 === 0;
   const options = [signature.label];
   shuffle(TIME_SIGNATURES).forEach(({ label }) => {
@@ -627,7 +671,7 @@ function makeTimeSignatureQuestion() {
   return {
     id: `time-signature-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'time-signatures',
-    grade: null,
+    grade: notation.grade,
     question: 'What is the time signature of the following bars?',
     answer: signature.label,
     correct: signature.label,
@@ -636,7 +680,7 @@ function makeTimeSignatureQuestion() {
       ? `${signature.label} has ${signature.top / 3} main beats, each grouped as three quavers.`
       : `${signature.label} has ${signature.top} beats in each bar, with a ${signature.bottom} note receiving one beat.`,
     image: null,
-    notation: makeTimeSignatureNotation(signature),
+    notation,
     userAnswer: null,
   };
 }
@@ -653,7 +697,7 @@ function makeTimeSignatureClassificationQuestion() {
   return {
     id: `time-classification-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'time-signatures',
-    grade: null,
+    grade: CURRICULUM.questionFormGrades.timeSignatureClassification,
     answerType: 'time-classification',
     question: 'How is this time signature classified?',
     answer: correct,
@@ -709,7 +753,7 @@ function makeRestIdentificationQuestion() {
   return {
     id: `rest-identification-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'time-signatures',
-    grade: null,
+    grade: signature.grade,
     answerType: 'rest-identification',
     question: 'What is the value of each missing rest?',
     answer: correct,
@@ -751,7 +795,7 @@ function makeKeySignatureQuestion() {
   return {
     id: `key-signature-${signature.key.replaceAll('♯', 'sharp').replaceAll('♭', 'flat').replaceAll(' ', '-')}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'key-signatures',
-    grade: null,
+    grade: signature.grade,
     answerType: 'key-signature',
     question: `Give the key signature for ${signature.key}.`,
     answer: correct,
@@ -797,6 +841,9 @@ function makeScaleQuestion() {
   const [minorName, minorKey, naturalMinorNotes] = base.minor;
   const signatureNotes = KEY_SIGNATURES.find(({ key }) => key === majorName)?.notes || [];
   const type = isMajor ? 'major' : randomFrom(['harmonic-minor', 'melodic-minor']);
+  const scaleGrade = isMajor
+    ? CURRICULUM.keyGrades[majorName]
+    : Math.max(type === 'melodic-minor' ? 3 : 2, CURRICULUM.keyGrades[minorName]);
   const minorTonic = minorName.replace(/ minor$/, '');
   const minorQuality = type === 'harmonic-minor' ? 'harmonic minor' : 'melodic minor';
   const minorEquivalent = `${minorTonic} ${randomFrom(['harmonic minor', 'melodic minor'])}`;
@@ -832,7 +879,7 @@ function makeScaleQuestion() {
   return {
     id: `scale-identification-${Math.random().toString(36).slice(2, 8)}`,
     category: 'key-signatures',
-    grade: null,
+    grade: scaleGrade,
     answerType: 'scale-identification',
     question: 'Identify this scale.',
     answer: scale.answer,
@@ -845,66 +892,155 @@ function makeScaleQuestion() {
   };
 }
 
-function createTermsTest(questionCount) {
-  const gradeCounts = [0, 0, 0];
-  for (let index = 0; index < questionCount; index += 1) gradeCounts[index % 3] += 1;
-
-  return shuffle([1, 2, 3].flatMap((grade, index) => shuffle(BANK[grade]).slice(0, gradeCounts[index]).map((entry) => makeQuestion(grade, entry))));
+function sampleQuestions(questions, count) {
+  if (!questions.length) return [];
+  const selected = [];
+  while (selected.length < count) {
+    shuffle(questions).forEach((question) => {
+      if (selected.length < count) selected.push({ ...question });
+    });
+  }
+  return selected;
 }
 
-function createIntervalsTest(questionCount) {
-  const allQuestions = Object.keys(window.ABRSM_INTERVAL_MATRIX).flatMap((root) =>
-    window.ABRSM_INTERVALS.map((interval) => makeIntervalQuestion(root, interval))
-  );
-  const intervalNameCount = Math.floor(questionCount / 2);
+function selectQuestionsByGrade(candidates, questionCount, maximumGrade) {
+  const eligible = candidates.filter((question) => question.grade <= maximumGrade);
+  if (!eligible.length) return [];
+
+  // Prefer the selected grade. Until a future grade has content, use the
+  // highest available grade below it so Grade 4/5 selections remain useful.
+  const focusGrade = eligible.some((question) => question.grade === maximumGrade)
+    ? maximumGrade
+    : Math.max(...eligible.map((question) => question.grade));
+  const focusQuestions = eligible.filter((question) => question.grade === focusGrade);
+  const lowerGradeQuestions = eligible.filter((question) => question.grade < focusGrade);
+  const focusCount = lowerGradeQuestions.length ? Math.ceil(questionCount / 2) : questionCount;
+  const remainingCount = questionCount - focusCount;
+
   return shuffle([
-    ...shuffle(allQuestions).slice(0, questionCount - intervalNameCount),
-    ...Array.from({ length: intervalNameCount }, () => makeIntervalRecognitionQuestion()),
+    ...sampleQuestions(focusQuestions, focusCount),
+    ...sampleQuestions(lowerGradeQuestions.length ? lowerGradeQuestions : focusQuestions, remainingCount),
   ]);
 }
 
-function createPitchesTest(questionCount) {
-  return Array.from({ length: questionCount }, () => makePitchQuestion());
+function runtimeQuestionPool(makeQuestion, count) {
+  return Array.from({ length: Math.max(80, count * 16) }, makeQuestion);
 }
 
-function createTonicTriadsTest(questionCount) {
-  return Array.from({ length: questionCount }, () => makeTonicTriadQuestion());
+function createTermsTest(questionCount, maximumGrade) {
+  const candidates = Object.keys(BANK).map(Number).flatMap((grade) => BANK[grade].map((entry) => makeQuestion(grade, entry)));
+  return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
 }
 
-function createTimeSignaturesTest(questionCount) {
-  return shuffle(Array.from({ length: questionCount }, (_, index) => (
-    index % 3 === 0 ? makeTimeSignatureQuestion() : index % 3 === 1 ? makeRestIdentificationQuestion() : makeTimeSignatureClassificationQuestion()
-  )));
+function createIntervalsTest(questionCount, maximumGrade) {
+  const namedQuestions = Object.keys(window.ABRSM_INTERVAL_MATRIX).flatMap((root) =>
+    window.ABRSM_INTERVALS.map((interval) => makeIntervalQuestion(root, interval))
+  );
+  const candidates = [
+    ...namedQuestions,
+    ...runtimeQuestionPool(makeIntervalRecognitionQuestion, questionCount),
+  ];
+  return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
 }
 
-function createKeySignaturesTest(questionCount) {
-  return shuffle(Array.from({ length: questionCount }, (_, index) => (
-    index % 2 === 0 ? makeKeySignatureQuestion() : makeScaleQuestion()
-  )));
+function createPitchesTest(questionCount, maximumGrade) {
+  return selectQuestionsByGrade(runtimeQuestionPool(makePitchQuestion, questionCount), questionCount, maximumGrade);
+}
+
+function createTonicTriadsTest(questionCount, maximumGrade) {
+  return selectQuestionsByGrade(runtimeQuestionPool(makeTonicTriadQuestion, questionCount), questionCount, maximumGrade);
+}
+
+function createTimeSignaturesTest(questionCount, maximumGrade) {
+  const makers = [makeTimeSignatureQuestion, makeRestIdentificationQuestion, makeTimeSignatureClassificationQuestion];
+  const candidates = runtimeQuestionPool(() => randomFrom(makers)(), questionCount);
+  return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
+}
+
+function createKeySignaturesTest(questionCount, maximumGrade) {
+  const candidates = runtimeQuestionPool(() => (Math.random() < 0.5 ? makeKeySignatureQuestion() : makeScaleQuestion()), questionCount);
+  return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
 }
 
 function setActiveCategory(category) {
   document.querySelectorAll('.category-button').forEach((button) => {
     const active = button.dataset.category === category;
+    const available = CURRICULUM.categoryMinimumGrades[button.dataset.category] <= state.grade;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+    button.disabled = !available;
+  });
+}
+
+function setActiveGrade(grade) {
+  state.grade = grade;
+  document.querySelectorAll('.grade-dot').forEach((button) => {
+    const active = Number(button.dataset.grade) === grade;
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', String(active));
   });
+  if (CURRICULUM.categoryMinimumGrades[state.category] > grade) state.category = 'terms';
+  setActiveCategory(state.category);
+}
+
+function categoryLabel(category) {
+  return {
+    intervals: 'Intervals',
+    pitches: 'Pitch',
+    'tonic-triads': 'Tonic triads',
+    'key-signatures': 'Key signatures',
+    'time-signatures': 'Time signatures',
+    terms: 'Terms & signs',
+  }[category] || 'Music theory';
+}
+
+function stopQuestionTimer() {
+  if (state.timerId !== null) window.clearInterval(state.timerId);
+  state.timerId = null;
+  state.timerDeadline = null;
+}
+
+function updateQuestionTimer(remaining) {
+  const timer = $('question-timer');
+  timer.textContent = `${remaining}s`;
+  timer.classList.toggle('urgent', remaining <= 5);
+}
+
+function startQuestionTimer() {
+  stopQuestionTimer();
+  const timer = $('question-timer');
+  timer.classList.toggle('hidden', !state.timerEnabled);
+  if (!state.timerEnabled) return;
+  state.timerDeadline = Date.now() + TIMER_SECONDS * 1000;
+  const tick = () => {
+    const remaining = Math.max(0, Math.ceil((state.timerDeadline - Date.now()) / 1000));
+    updateQuestionTimer(remaining);
+    if (remaining === 0) {
+      stopQuestionTimer();
+      if (!state.locked) {
+        state.selected = null;
+        submitAnswer(true);
+      }
+    }
+  };
+  tick();
+  state.timerId = window.setInterval(tick, 200);
 }
 
 function createTest(questionCount = Number($('test-length').value), category = state.category) {
   state.category = category;
   setActiveCategory(category);
   state.test = state.category === 'intervals'
-    ? createIntervalsTest(questionCount)
+    ? createIntervalsTest(questionCount, state.grade)
     : state.category === 'pitches'
-      ? createPitchesTest(questionCount)
+      ? createPitchesTest(questionCount, state.grade)
       : state.category === 'tonic-triads'
-        ? createTonicTriadsTest(questionCount)
+        ? createTonicTriadsTest(questionCount, state.grade)
       : state.category === 'time-signatures'
-      ? createTimeSignaturesTest(questionCount)
+      ? createTimeSignaturesTest(questionCount, state.grade)
       : state.category === 'key-signatures'
-        ? createKeySignaturesTest(questionCount)
-      : createTermsTest(questionCount);
+        ? createKeySignaturesTest(questionCount, state.grade)
+      : createTermsTest(questionCount, state.grade);
   state.current = 0;
   state.score = 0;
   state.selected = null;
@@ -916,22 +1052,14 @@ function createTest(questionCount = Number($('test-length').value), category = s
 }
 
 function renderQuestion() {
+  stopQuestionTimer();
   const item = state.test[state.current];
   const position = state.current + 1;
   $('progress-label').textContent = `Question ${position} of ${state.test.length}`;
   $('score-label').textContent = `${state.score} correct`;
   $('progress-bar').style.width = `${(position / state.test.length) * 100}%`;
-  $('grade-badge').textContent = item.category === 'intervals'
-    ? 'Intervals'
-    : item.category === 'pitches'
-      ? 'Pitch'
-      : item.category === 'tonic-triads'
-        ? 'Tonic triads'
-      : item.category === 'key-signatures'
-      ? 'Key signatures'
-    : item.category === 'time-signatures'
-      ? 'Time signatures'
-      : `Grade ${item.grade}`;
+  const label = categoryLabel(item.category);
+  $('grade-badge').textContent = item.grade ? `Grade ${item.grade} · ${label}` : label;
   $('question-number').textContent = String(position).padStart(2, '0');
   $('question-text').textContent = item.question;
   $('feedback').textContent = '';
@@ -979,14 +1107,17 @@ function renderQuestion() {
   answers.classList.toggle('rest-identification-answers', item.answerType === 'rest-identification');
   if (item.answerType === 'key-signature') {
     renderKeySignatureAnswers(item);
+    startQuestionTimer();
     return;
   }
   if (item.answerType === 'rest-identification') {
     renderRestValueAnswers(item);
+    startQuestionTimer();
     return;
   }
   if (item.answerType === 'tonic-triad') {
     renderTonicTriadAnswers(item);
+    startQuestionTimer();
     return;
   }
   item.options.forEach((option, index) => {
@@ -1014,6 +1145,7 @@ function renderQuestion() {
     button.addEventListener('click', () => chooseAnswer(button, option));
     answers.appendChild(button);
   });
+  startQuestionTimer();
 }
 
 function renderKeySignaturePreview(element, accidental, notes) {
@@ -1299,7 +1431,9 @@ function chooseAnswer(button, answer) {
   $('next-button').textContent = 'Check answer';
 }
 
-function submitAnswer() {
+function submitAnswer(timedOut = false) {
+  if (state.locked) return;
+  stopQuestionTimer();
   const item = state.test[state.current];
   item.userAnswer = state.selected;
   state.locked = true;
@@ -1329,7 +1463,11 @@ function submitAnswer() {
       : item.answerType === 'tonic-triad'
         ? formatTonicTriadAnswer(item.correct)
       : item.correct;
-  $('feedback').textContent = correct ? 'Correct — well done.' : `Not quite. The correct answer is “${formattedCorrect}”.`;
+  $('feedback').textContent = correct
+    ? 'Correct — well done.'
+    : timedOut
+      ? `Time’s up. The correct answer is “${formattedCorrect}”.`
+      : `Not quite. The correct answer is “${formattedCorrect}”.`;
   $('feedback').className = `feedback ${correct ? 'good' : 'bad'}`;
   $('score-label').textContent = `${state.score} correct`;
   $('next-button').textContent = state.current === state.test.length - 1 ? 'See results' : 'Next question';
@@ -1343,6 +1481,7 @@ function nextQuestion() {
 }
 
 function renderResults() {
+  stopQuestionTimer();
   $('test-screen').classList.add('hidden');
   $('result-screen').classList.remove('hidden');
   const wrong = state.test.filter((item) => item.userAnswer !== item.correct);
@@ -1360,17 +1499,9 @@ function renderResults() {
   wrong.forEach((item) => {
     const card = document.createElement('article');
     card.className = 'review-item';
-    const label = item.category === 'intervals'
-      ? 'Intervals'
-      : item.category === 'pitches'
-        ? 'Pitch'
-        : item.category === 'tonic-triads'
-          ? 'Tonic triads'
-        : item.category === 'key-signatures'
-        ? 'Key signatures'
-      : item.category === 'time-signatures'
-        ? 'Time signatures'
-        : `Grade ${item.grade}`;
+    const label = item.grade
+      ? `Grade ${item.grade} · ${categoryLabel(item.category)}`
+      : categoryLabel(item.category);
     const userAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.userAnswer) : item.answerType === 'rest-identification' ? formatRestAnswers(item.userAnswer) : item.answerType === 'tonic-triad' ? formatTonicTriadAnswer(item.userAnswer) : item.userAnswer;
     const correctAnswer = item.answerType === 'key-signature' ? formatKeySignatureAnswer(item.correct) : item.answerType === 'rest-identification' ? formatRestAnswers(item.correct) : item.answerType === 'tonic-triad' ? formatTonicTriadAnswer(item.correct) : item.correct;
     card.innerHTML = `<h3>${label} · ${item.question}</h3>${item.notation ? '<div class="review-notation" role="img"></div>' : item.image ? `<img class="review-image" src="${item.image}" alt="Musical notation for the question" />` : ''}<p><strong>Your answer:</strong> ${userAnswer || 'No answer'}</p><p><strong>Correct answer:</strong> ${correctAnswer}</p><p class="review-explanation"><strong>Explanation:</strong> ${item.explanation}</p>`;
@@ -1384,7 +1515,18 @@ if ($('test-screen')) {
   document.querySelectorAll('.category-button').forEach((button) => {
     button.addEventListener('click', () => createTest(button.dataset.category === 'terms' ? 15 : 10, button.dataset.category));
   });
+  document.querySelectorAll('.grade-dot').forEach((button) => {
+    button.addEventListener('click', () => {
+      setActiveGrade(Number(button.dataset.grade));
+      createTest(Number($('test-length').value));
+    });
+  });
   $('test-length').addEventListener('change', (event) => createTest(Number(event.target.value)));
+  $('timer-enabled').addEventListener('change', (event) => {
+    state.timerEnabled = event.target.checked;
+    if (!state.locked) startQuestionTimer();
+  });
   $('restart-button').addEventListener('click', () => createTest(Number($('test-length').value)));
+  setActiveGrade(state.grade);
   createTest(15);
 }

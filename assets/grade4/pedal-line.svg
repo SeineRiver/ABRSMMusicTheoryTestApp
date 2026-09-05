@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="125" viewBox="0 0 300 125" role="img" aria-labelledby="title">
+  <title id="title">Sustain pedal line</title>
+  <rect width="300" height="125" fill="white"/>
+  <path d="M18 27h264M18 37h264M18 47h264M18 57h264M18 67h264" stroke="#172b4d" stroke-width="1.5"/>
+  <ellipse cx="85" cy="52" rx="9" ry="6.5" transform="rotate(-18 85 52)" fill="#172b4d"/><path d="M93 50V12" stroke="#172b4d" stroke-width="2"/>
+  <ellipse cx="181" cy="42" rx="9" ry="6.5" transform="rotate(-18 181 42)" fill="#172b4d"/><path d="M189 40V2" stroke="#172b4d" stroke-width="2"/>
+  <text x="17" y="103" fill="#172b4d" font-family="Georgia, serif" font-size="25" font-style="italic">Ped.</text>
+  <path d="M87 102h143m0 0v-15m0 15v14m40-14v14" stroke="#172b4d" stroke-width="2.5" stroke-linecap="round"/><circle cx="270" cy="102" r="4" fill="#172b4d"/>
+</svg>

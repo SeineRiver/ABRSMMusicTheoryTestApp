@@ -1,6 +1,6 @@
 # ABRSM Music Theory Test App
 
-A simple, strictly client-side mock-test application for ABRSM Music Theory Grades 1–3.
+A simple, strictly client-side mock-test application primarily covering ABRSM Music Theory Grades 1–4.
 
 Current release: **1.3.0**
 
@@ -23,6 +23,10 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Some time-signature questions hide two to four rests across two bars and ask the learner to identify each rest’s duration and dotted state.
 - Choice-based questions have four answer choices: one correct answer and three distractors.
 - Questions are answered one at a time.
+- The five-dot grade selector sets the highest grade in a test. About half the questions use that highest available grade and the rest are drawn from lower grades.
+- Grade 4 Terms & Signs includes Italian and French directions, string techniques, piano pedal signs, and ornament recognition.
+- An optional timed mode gives 20 seconds per question; unanswered questions count as incorrect.
+- Every generated question carries the earliest applicable syllabus grade in a central curriculum map. This keeps the current mixed-level practice ready for a later Grade 4 or Grade 5 filter.
 - Progress and the current score are shown during the test.
 - After the final question, the result page lists incorrect answers alongside the correct answers.
 - **Do another test** starts a fresh randomized test.
@@ -44,11 +48,12 @@ The maintained ground truth for the app is the PDF question bank:
 
 [`output/pdf/abrsm-terms-and-signs-grades-1-3.pdf`](./output/pdf/abrsm-terms-and-signs-grades-1-3.pdf)
 
-The PDF is the canonical reference for the terms-and-signs questions, answers, grade grouping, and notation graphics. The question data in [`app.js`](./app.js) is the client-side runtime copy used by the application. Runtime-generated interval, time-signature, key-signature, and scale questions are defined in `app.js`.
+The Grade 1–3 PDF is the canonical reference for those terms-and-signs questions, answers, grade grouping, and notation graphics. Grade 4 terms were initially drawn from the supplied Italian and French PPSX presentations and reconciled with the maintained Grade 4 curriculum list. The question data in [`app.js`](./app.js) is the client-side runtime copy used by the application. Runtime-generated interval, time-signature, key-signature, and scale questions are defined in `app.js`; their grade metadata is maintained in the central `CURRICULUM` map.
 
 The PDF was compiled from:
 
 - The supplied Grade 1, Grade 2, and Grade 3 Terms & Signs PPSX presentations
+- The supplied Grade 4 Italian and French Terms & Signs PPSX presentations
 - The attached ABRSM terms-and-signs PDF
 - The attached ABRSM terms-and-signs DOCX
 

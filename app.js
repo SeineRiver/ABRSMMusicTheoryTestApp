@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 1.4.0';
+const APP_VERSION = 'Version 1.5.0';
 
 const RAW_BANK = {
   1: [
@@ -23,7 +23,38 @@ const RAW_BANK = {
     ['The tr sign means:', 'Trill: rapid alternation between the note and the note above', 'assets/grade4/trill.svg'], ['This turn sign means:', 'Turn: note above, main note, note below, main note', 'assets/grade4/turn.svg'], ['This upper mordent sign means:', 'Upper mordent: main note, note above, main note quickly', 'assets/grade4/upper-mordent.svg'], ['This lower mordent sign means:', 'Lower mordent: main note, note below, main note quickly', 'assets/grade4/lower-mordent.svg'], ['This slashed grace note means:', 'Acciaccatura: a crushed grace note played as quickly as possible before the main note', 'assets/grade4/acciaccatura.svg'], ['This unslashed grace note means:', 'Appoggiatura: an expressive grace note that takes a fixed portion of the main note\'s value', 'assets/grade4/appoggiatura.svg'],
     ['a means:', 'To, at'], ['Animé means:', 'Animated, lively'], ['Assez means:', 'Enough, sufficiently'], ['Avec means:', 'With'], ['Cedez means:', 'Yield, relax the speed'], ['Douce means:', 'Sweet'], ['En dehors means:', 'Prominent'], ['Et means:', 'And'], ['Legerement means:', 'Light'], ['Lent means:', 'Slow'], ['Mais means:', 'But'], ['Moins means:', 'Less'], ['Modéré means:', 'At a moderate speed'], ['Non means:', 'Not'], ['Peu means:', 'Little'], ['Plus means:', 'More'], ['Presser means:', 'Hurry'], ['Ralentir means:', 'Slow down'], ['Retenu means:', 'Held back'], ['Sans means:', 'Without'], ['Tres means:', 'Very'], ['Un, une means:', 'One'], ['Vif means:', 'Lively'], ['Vite means:', 'Quick']
   ],
-  5: []
+  5: [
+    ['Aber means:', 'But'],
+    ['A cappella means:', 'Unaccompanied'],
+    ['Al la pointe means:', 'Use the bow at the point'],
+    ['Allegro assai means:', 'Very fast'],
+    ['a niente means:', 'To nothing; dying away to silence'],
+    ['Attacca means:', 'Go immediately to the next section'],
+    ['Ausdruck means:', 'Expression'],
+    ['Bewegt means:', 'Agitated'],
+    ['Collo voce means:', 'Keep with the singer'],
+    ['Con dolore means:', 'With grief, sorrow'],
+    ['Con spirito means:', 'With spirit'],
+    ['Dolente means:', 'Sad, mournful'],
+    ['Dolore means:', 'Grief'],
+    ['Doloroso means:', 'Sorrowful'],
+    ['Espressione means:', 'Expression'],
+    ['Furioso means:', 'Furious'],
+    ['Grandioso means:', 'Grandly'],
+    ['Incalzando means:', 'Hurrying'],
+    ['Nicht means:', 'Not'],
+    ['Ossia means:', 'Or; alternatively'],
+    ['Piacevole means:', 'Pleasant'],
+    ['Rinforzando (rf, rfz, rinf.) means:', 'Reinforcing'],
+    ['Smorzando (smorz.) means:', 'Dying away in tone and speed'],
+    ['Sotto voce means:', 'In an undertone'],
+    ['Langsam means:', 'Slow'],
+    ['Lebhaft means:', 'Lively'],
+    ['Mässig means:', 'At a moderate speed'],
+    ['Ruhig means:', 'Peaceful'],
+    ['Schnell means:', 'Fast'],
+    ['Traurig means:', 'Sad']
+  ]
 };
 
 // Short score excerpts are shared where the printed marking is the teaching point.
@@ -174,7 +205,7 @@ const BANK = Object.fromEntries(
       acceptedAnswers: [answer],
       explanation: buildExplanation(question, answer),
       image: image || EXAMPLE_IMAGES[question.toLowerCase()] || null,
-      source: Number(grade) === 4 ? 'Grade 4 Italian and French Terms & Signs PPSX presentations' : 'ABRSM Terms & Signs Grades 1–3 PDF'
+      source: Number(grade) === 4 ? 'Grade 4 Italian and French Terms & Signs PPSX presentations' : Number(grade) === 5 ? 'Maintained Grade 5 terms and signs list' : 'ABRSM Terms & Signs Grades 1–3 PDF'
     }))
   ])
 );
@@ -224,6 +255,7 @@ const SAFE_ROOT_OCTAVES = {
   treble: { C: [4, 5], D: [4, 5], E: [4, 5], F: [4, 5], G: [4, 5], A: [4, 5], B: [4, 5] },
   bass: { C: [3, 4], D: [3, 4], E: [2, 3], F: [2, 3], G: [2, 3], A: [2, 3], B: [2, 3] },
   alto: { C: [4, 5], D: [4, 5], E: [4, 5], F: [4, 5], G: [3, 4], A: [3, 4], B: [3, 4] },
+  tenor: { C: [4, 5], D: [4, 5], E: [4, 5], F: [3, 4], G: [3, 4], A: [3, 4], B: [3, 4] },
 };
 // The app keeps the syllabus data separate from question generation so that
 // later Grade 4/5 content can be added without changing existing generators.
@@ -235,12 +267,14 @@ const CURRICULUM = Object.freeze({
     'E major': 3, 'A♭ major': 3,
     'B minor': 3, 'F♯ minor': 3, 'C♯ minor': 3, 'G minor': 3, 'C minor': 3, 'F minor': 3,
     'B major': 4, 'G♯ minor': 4, 'D♭ major': 4, 'B♭ minor': 4,
+    'F♯ major': 5, 'D♯ minor': 5, 'G♭ major': 5, 'E♭ minor': 5,
   }),
   timeSignatureGrades: Object.freeze({
     '2/4': 1, '3/4': 1, '4/4': 1,
     '2/2': 2, '3/2': 2, '4/2': 2, '3/8': 2,
     '6/8': 3, '9/8': 3, '12/8': 3,
     '6/4': 4, '9/4': 4, '12/4': 4,
+    '5/4': 5, '7/4': 5, '5/8': 5, '7/8': 5,
   }),
   questionFormGrades: Object.freeze({
     namedInterval: 3,
@@ -251,6 +285,12 @@ const CURRICULUM = Object.freeze({
     scaleDegree: 4,
     chromaticScale: 4,
     functionalTriad: 4,
+    tenorClef: 5,
+    instrumentTransposition: 5,
+    compoundInterval: 5,
+    triadInversion: 5,
+    cadence: 5,
+    irregularRhythm: 5,
   }),
   categoryMinimumGrades: Object.freeze({
     terms: 1,
@@ -266,11 +306,12 @@ const TIME_SIGNATURES = [
   { top: 2, bottom: 2 }, { top: 3, bottom: 2 }, { top: 4, bottom: 2 },
   { top: 3, bottom: 8 }, { top: 6, bottom: 8 }, { top: 9, bottom: 8 }, { top: 12, bottom: 8 },
   { top: 6, bottom: 4 }, { top: 9, bottom: 4 }, { top: 12, bottom: 4 },
+  { top: 5, bottom: 4 }, { top: 7, bottom: 4 }, { top: 5, bottom: 8 }, { top: 7, bottom: 8 },
 ].map((signature) => {
   const label = `${signature.top}/${signature.bottom}`;
   return Object.freeze({ ...signature, label, grade: CURRICULUM.timeSignatureGrades[label] });
 });
-const TIME_SIGNATURE_CLASSES = ['Simple duple', 'Simple triple', 'Simple quadruple', 'Compound duple', 'Compound triple', 'Compound quadruple'];
+const TIME_SIGNATURE_CLASSES = ['Simple duple', 'Simple triple', 'Simple quadruple', 'Compound duple', 'Compound triple', 'Compound quadruple', 'Irregular quintuple', 'Irregular septuple'];
 const CONFUSING_TIME_SIGNATURES = new Map([
   ['4/4', '2/2'], ['2/2', '4/4'],
   ['3/4', '6/8'], ['6/8', '3/4'],
@@ -291,6 +332,8 @@ const KEY_SIGNATURES = [
   ['E♭ major', 'C minor', 'flat', ['B', 'E', 'A']],
   ['A♭ major', 'F minor', 'flat', ['B', 'E', 'A', 'D']],
   ['D♭ major', 'B♭ minor', 'flat', ['B', 'E', 'A', 'D', 'G']],
+  ['F♯ major', 'D♯ minor', 'sharp', ['F', 'C', 'G', 'D', 'A', 'E']],
+  ['G♭ major', 'E♭ minor', 'flat', ['B', 'E', 'A', 'D', 'G', 'C']],
 ].flatMap(([major, minor, accidental, notes]) => [
   { key: major, accidental, notes, grade: CURRICULUM.keyGrades[major] }, { key: minor, accidental, notes, grade: CURRICULUM.keyGrades[minor] },
 ]);
@@ -306,6 +349,8 @@ const SCALE_TEMPLATES = [
   { major: ['E♭ major', 'Eb', ['Eb', 'F', 'G', 'Ab', 'Bb', 'C', 'D', 'Eb']], minor: ['C minor', 'Cm', ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb', 'C']] },
   { major: ['A♭ major', 'Ab', ['Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'G', 'Ab']], minor: ['F minor', 'Fm', ['F', 'G', 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F']] },
   { major: ['D♭ major', 'Db', ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'C', 'Db']], minor: ['B♭ minor', 'Bbm', ['Bb', 'C', 'Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb']] },
+  { major: ['F♯ major', 'F#', ['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#', 'F#']], minor: ['D♯ minor', 'D#m', ['D#', 'E#', 'F#', 'G#', 'A#', 'B', 'C#', 'D#']] },
+  { major: ['G♭ major', 'Gb', ['Gb', 'Ab', 'Bb', 'Cb', 'Db', 'Eb', 'F', 'Gb']], minor: ['E♭ minor', 'Ebm', ['Eb', 'F', 'Gb', 'Ab', 'Bb', 'Cb', 'Db', 'Eb']] },
 ];
 const SCALE_QUESTIONS = SCALE_TEMPLATES.flatMap(({ major, minor }) => {
   const [majorName, majorKey, majorNotes] = major;
@@ -360,7 +405,7 @@ function shuffle(list) {
 function makeQuestion(grade, entry) {
   const { answer: correct } = entry;
   const distractors = shuffle([...new Set(BANK[grade].map((item) => item.answer).filter((answer) => answer !== correct))]).slice(0, 3);
-  return { ...entry, correct, options: shuffle([correct, ...distractors]), userAnswer: null };
+  return { ...entry, questionForm: entry.image ? 'notation-sign' : 'term-definition', correct, options: shuffle([correct, ...distractors]), userAnswer: null };
 }
 
 function randomFrom(list) {
@@ -471,6 +516,7 @@ function makeIntervalQuestion(root, interval) {
   return {
     id: `interval-${root}-${interval.id}`,
     category: 'intervals',
+    questionForm: 'named-interval',
     grade: CURRICULUM.questionFormGrades.namedInterval,
     question: `What is the ${interval.name} above the following note?`,
     answer: correct,
@@ -526,6 +572,7 @@ function makeIntervalRecognitionQuestion() {
   return {
     id: `interval-recognition-${presentation}-${interval.id}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'intervals',
+    questionForm: 'interval-identification',
     grade: Math.max(CURRICULUM.questionFormGrades.intervalRecognition, CURRICULUM.keyGrades[scaleName]),
     answerType: 'interval-identification',
     question: 'Name this interval.',
@@ -546,6 +593,42 @@ function makeIntervalRecognitionQuestion() {
   };
 }
 
+function makeCompoundIntervalRecognitionQuestion() {
+  const simpleIntervals = window.ABRSM_INTERVALS.filter((interval) => interval.id !== 'P8');
+  const interval = randomFrom(simpleIntervals);
+  const root = randomFrom(Object.keys(window.ABRSM_INTERVAL_MATRIX));
+  const upper = window.ABRSM_INTERVAL_MATRIX[root][interval.id];
+  const rootIndex = NOTE_LETTERS.indexOf(root[0]);
+  const clef = randomFrom(['treble', 'alto', 'tenor', 'bass']);
+  const octave = randomFrom(SAFE_ROOT_OCTAVES[clef][root[0]]);
+  const upperOctave = octave + Math.floor((rootIndex + INTERVAL_DIATONIC_STEPS[interval.id]) / NOTE_LETTERS.length) + 1;
+  const number = INTERVAL_DIATONIC_STEPS[interval.id] + 8;
+  const compoundName = interval.name.replace(/\d+(?:st|nd|rd|th)$/, `${number}${number === 9 ? 'th' : number === 10 ? 'th' : number === 11 ? 'th' : number === 12 ? 'th' : 'th'}`);
+  const presentation = randomFrom(['harmonic', 'melodic']);
+  const lowerNote = noteToAbc(root, octave);
+  const upperNote = noteToAbc(upper, upperOctave);
+  const notation = presentation === 'harmonic' ? `[${lowerNote}${upperNote}]4` : `${lowerNote}4 ${upperNote}4`;
+  const labels = simpleIntervals.map((candidate) => {
+    const candidateNumber = INTERVAL_DIATONIC_STEPS[candidate.id] + 8;
+    return candidate.name.replace(/\d+(?:st|nd|rd|th)$/, `${candidateNumber}th`);
+  });
+  return {
+    id: `compound-interval-${root}-${interval.id}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'intervals',
+    questionForm: 'compound-interval-identification',
+    grade: CURRICULUM.questionFormGrades.compoundInterval,
+    answerType: 'interval-identification',
+    question: 'Name this compound interval.',
+    answer: compoundName,
+    correct: compoundName,
+    options: shuffle([compoundName, ...shuffle(labels.filter((label) => label !== compoundName)).slice(0, 3)]),
+    explanation: `${compoundName} is an octave plus a ${interval.name.toLowerCase()}; it spans ${interval.semitones + 12} semitones.`,
+    image: null,
+    notation: { abc: `X:1\nM:none\nL:1/4\nK:C\nV:1 clef=${clef}\n${notation}`, alt: `${presentation} ${compoundName} in ${clef} clef` },
+    userAnswer: null,
+  };
+}
+
 function formatPitchName(note) {
   return note.replaceAll('#', '♯').replaceAll('b', '♭');
 }
@@ -555,7 +638,7 @@ function makePitchQuestion() {
   const template = randomFrom(SCALE_TEMPLATES.slice(1));
   const [scaleName, key, scaleNotes] = randomFrom([template.major, template.minor]);
   const note = randomFrom(scaleNotes.slice(0, -1));
-  const clef = randomFrom(['treble', 'bass', 'alto']);
+  const clef = randomFrom(['treble', 'bass', 'alto', 'tenor']);
   const octave = randomFrom(SAFE_ROOT_OCTAVES[clef][note[0]]);
   const signatureNotes = [...new Set(scaleNotes.filter((scaleNote) => scaleNote.length > 1).map((scaleNote) => scaleNote[0]))];
   const noteIndex = NOTE_LETTERS.indexOf(note[0]);
@@ -569,7 +652,8 @@ function makePitchQuestion() {
   return {
     id: `pitch-${key}-${note}-${clef}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'pitches',
-    grade: Math.max(CURRICULUM.keyGrades[scaleName], clef === 'alto' ? CURRICULUM.questionFormGrades.altoClef : 1),
+    questionForm: 'note-naming',
+    grade: Math.max(CURRICULUM.keyGrades[scaleName], clef === 'tenor' ? CURRICULUM.questionFormGrades.tenorClef : clef === 'alto' ? CURRICULUM.questionFormGrades.altoClef : 1),
     question: 'Name this note.',
     answer: correct,
     correct,
@@ -596,6 +680,7 @@ function makeEnharmonicQuestion() {
   return {
     id: `enharmonic-${written}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'pitches',
+    questionForm: 'enharmonic-equivalence',
     grade: CURRICULUM.questionFormGrades.enharmonic,
     question: 'Which note is enharmonically equivalent to this note?',
     answer: formatPitchName(equivalent),
@@ -604,6 +689,37 @@ function makeEnharmonicQuestion() {
     explanation: `${formatPitchName(written)} and ${formatPitchName(equivalent)} sound at the same pitch, even though they are written differently.`,
     image: null,
     notation: { abc: `X:1\nM:none\nL:1/4\nK:C\nV:1 clef=${clef}\n${noteToAbc(written, octave)}4`, alt: `${formatPitchName(written)} in ${clef} clef` },
+    userAnswer: null,
+  };
+}
+
+function makeInstrumentTranspositionQuestion() {
+  const examples = [
+    { instrument: 'B♭ instrument', interval: 'a major 2nd lower than written', written: 'C major', concert: 'B♭ major' },
+    { instrument: 'A instrument', interval: 'a minor 3rd lower than written', written: 'C major', concert: 'A major' },
+    { instrument: 'F instrument', interval: 'a perfect 5th lower than written', written: 'C major', concert: 'F major' },
+  ];
+  const example = randomFrom(examples);
+  const toConcert = Math.random() < 0.5;
+  const sourceKey = toConcert ? example.written : example.concert;
+  const answer = toConcert ? example.concert : example.written;
+  const direction = toConcert ? 'concert pitch' : `a part for the ${example.instrument}`;
+  const sourceAbcKey = sourceKey.replace(' major', '').replace('♭', 'b');
+  const options = ['C major', 'A major', 'B♭ major', 'F major'];
+  return {
+    id: `instrument-transposition-${example.instrument[0]}-${toConcert ? 'concert' : 'written'}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'pitches',
+    questionForm: 'instrument-transposition',
+    grade: CURRICULUM.questionFormGrades.instrumentTransposition,
+    question: `This short melody is in ${sourceKey}. A ${example.instrument} sounds ${example.interval}. Which key gives ${direction}?`,
+    answer,
+    correct: answer,
+    options: shuffle([answer, ...options.filter((option) => option !== answer).slice(0, 3)]),
+    explanation: toConcert
+      ? `Transpose the written key ${example.interval}: ${example.written} becomes ${example.concert} at concert pitch.`
+      : `Transpose from concert pitch in the opposite direction: ${example.concert} becomes written ${example.written} for an ${example.instrument}.`,
+    image: null,
+    notation: { abc: `X:1\nM:none\nL:1/4\nK:${sourceAbcKey}\nV:1 clef=treble\nC D E G|`, alt: `Short melody in ${sourceKey}` },
     userAnswer: null,
   };
 }
@@ -617,7 +733,7 @@ function makeTonicTriadQuestion(degree = 1) {
   const template = randomFrom(SCALE_TEMPLATES);
   const [keyName, key, scaleNotes] = randomFrom([template.major, template.minor]);
   const signature = KEY_SIGNATURES.find(({ key: signatureKey }) => signatureKey === keyName);
-  const functionNames = { 1: 'tonic', 4: 'subdominant', 5: 'dominant' };
+  const functionNames = { 1: 'tonic', 2: 'supertonic', 4: 'subdominant', 5: 'dominant' };
   const mode = degree === 1 ? randomFrom(['key-signature', 'written-accidentals']) : 'written-accidentals';
   const harmonicNotes = keyName.endsWith('minor')
     ? scaleNotes.map((note, index) => (index === 6 ? raiseScaleNote(note) : note))
@@ -632,7 +748,8 @@ function makeTonicTriadQuestion(degree = 1) {
   return {
     id: `${functionNames[degree]}-triad-${key.replaceAll('#', 'sharp').replaceAll('b', 'flat')}-${mode}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'tonic-triads',
-    grade: Math.max(CURRICULUM.keyGrades[keyName], degree === 1 ? 1 : CURRICULUM.questionFormGrades.functionalTriad),
+    questionForm: 'triad-builder',
+    grade: Math.max(CURRICULUM.keyGrades[keyName], degree === 1 ? 1 : degree === 2 ? 5 : CURRICULUM.questionFormGrades.functionalTriad),
     answerType: 'tonic-triad',
     triadMode: mode,
     triadFunction: functionNames[degree],
@@ -648,7 +765,76 @@ function makeTonicTriadQuestion(degree = 1) {
   };
 }
 
+function triadChordAbc(notes, inversion = 0) {
+  const voiced = [...notes.slice(inversion), ...notes.slice(0, inversion)];
+  let octave = 4;
+  return `[${voiced.map((note, index) => {
+    if (index > 0 && NOTE_LETTERS.indexOf(note[0]) <= NOTE_LETTERS.indexOf(voiced[index - 1][0])) octave += 1;
+    return noteToAbc(note, octave);
+  }).join('')}]4`;
+}
+
+function makeTriadInversionQuestion() {
+  const template = randomFrom(SCALE_TEMPLATES);
+  const [keyName, , scaleNotes] = randomFrom([template.major, template.minor]);
+  const functionOptions = [{ degree: 1, name: 'tonic' }, { degree: 2, name: 'supertonic' }, { degree: 4, name: 'subdominant' }, { degree: 5, name: 'dominant' }];
+  const functionChoice = randomFrom(functionOptions);
+  const harmonicNotes = keyName.endsWith('minor') ? scaleNotes.map((note, index) => (index === 6 ? raiseScaleNote(note) : note)) : scaleNotes;
+  const rootIndex = functionChoice.degree - 1;
+  const notes = [0, 2, 4].map((offset) => harmonicNotes[(rootIndex + offset) % 7]);
+  const inversion = randomFrom([0, 1, 2]);
+  const labels = ['Root position', 'First inversion', 'Second inversion'];
+  const answer = labels[inversion];
+  return {
+    id: `triad-inversion-${keyName}-${functionChoice.degree}-${inversion}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'tonic-triads',
+    questionForm: 'triad-inversion',
+    grade: CURRICULUM.questionFormGrades.triadInversion,
+    question: `Identify the inversion of this ${functionChoice.name} triad in ${keyName}.`,
+    answer,
+    correct: answer,
+    options: labels,
+    explanation: `${answer} has ${formatPitchName(notes[inversion])} as its lowest note.`,
+    image: null,
+    notation: { abc: `X:1\nM:none\nL:1/4\nK:C\nV:1 clef=treble\n${triadChordAbc(notes, inversion)}|`, alt: `${answer} ${functionChoice.name} triad in ${keyName}` },
+    userAnswer: null,
+  };
+}
+
+function makeCadenceQuestion() {
+  const template = randomFrom(SCALE_TEMPLATES.filter(({ major }) => ['C major', 'G major', 'D major', 'F major'].includes(major[0])));
+  const [keyName, , scaleNotes] = template.major;
+  const types = [
+    { name: 'Perfect cadence', degrees: [5, 1], explanation: 'A perfect cadence moves from the dominant (V) to the tonic (I).' },
+    { name: 'Plagal cadence', degrees: [4, 1], explanation: 'A plagal cadence moves from the subdominant (IV) to the tonic (I).' },
+    { name: 'Imperfect cadence', degrees: [1, 5], explanation: 'An imperfect cadence ends on the dominant (V).' },
+  ];
+  const type = randomFrom(types);
+  const chordFor = (degree) => triadChordAbc([0, 2, 4].map((offset) => scaleNotes[(degree - 1 + offset) % 7]));
+  return {
+    id: `cadence-${keyName}-${type.name.replaceAll(' ', '-').toLowerCase()}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'tonic-triads',
+    questionForm: 'cadence-identification',
+    grade: CURRICULUM.questionFormGrades.cadence,
+    question: `Identify this cadence in ${keyName}.`,
+    answer: type.name,
+    correct: type.name,
+    options: shuffle([type.name, ...types.filter((candidate) => candidate !== type).map((candidate) => candidate.name), 'Interrupted cadence']),
+    explanation: type.explanation,
+    image: null,
+    notation: { abc: `X:1\nM:none\nL:1/4\nK:C\nV:1 clef=treble\n${chordFor(type.degrees[0])}|${chordFor(type.degrees[1])}||`, alt: `${type.name} in ${keyName}` },
+    userAnswer: null,
+  };
+}
+
 function getTimeSignatureGroups(signature) {
+  const irregularGroupings = {
+    '5/4': [[16, 24], [24, 16]],
+    '7/4': [[16, 16, 24], [24, 16, 16]],
+    '5/8': [[8, 12], [12, 8]],
+    '7/8': [[8, 8, 12], [12, 8, 8], [8, 12, 8]],
+  };
+  if (irregularGroupings[signature.label]) return randomFrom(irregularGroupings[signature.label]);
   const beatUnits = 32 / signature.bottom;
   if (signature.top > 3 && signature.top % 3 === 0) {
     return Array(signature.top / 3).fill(beatUnits * 3);
@@ -763,12 +949,15 @@ function makeTimeSignatureQuestion() {
   return {
     id: `time-signature-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'time-signatures',
+    questionForm: 'time-signature-identification',
     grade: notation.grade,
     question: 'What is the time signature of the following bars?',
     answer: signature.label,
     correct: signature.label,
     options: shuffle(options),
-    explanation: compound
+    explanation: signature.top === 5 || signature.top === 7
+      ? `${signature.label} is irregular: the notes are grouped into beats of two and three${signature.top === 7 ? ', with one additional group of two' : ''}.`
+      : compound
       ? `${signature.label} has ${signature.top / 3} main beats, each grouped as three quavers.`
       : `${signature.label} has ${signature.top} beats in each bar, with a ${signature.bottom} note receiving one beat.`,
     image: null,
@@ -778,6 +967,8 @@ function makeTimeSignatureQuestion() {
 }
 
 function timeSignatureClass(signature) {
+  if (signature.top === 5) return 'Irregular quintuple';
+  if (signature.top === 7) return 'Irregular septuple';
   const compound = signature.top > 3 && signature.top % 3 === 0;
   const beats = compound ? signature.top / 3 : signature.top;
   return `${compound ? 'Compound' : 'Simple'} ${beats === 2 ? 'duple' : beats === 3 ? 'triple' : 'quadruple'}`;
@@ -789,6 +980,7 @@ function makeTimeSignatureClassificationQuestion() {
   return {
     id: `time-classification-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'time-signatures',
+    questionForm: 'time-signature-classification',
     grade: CURRICULUM.questionFormGrades.timeSignatureClassification,
     answerType: 'time-classification',
     question: 'How is this time signature classified?',
@@ -828,6 +1020,13 @@ function makeAdvancedRhythmQuestion() {
     },
     {
       answer: 'Two semibreves (8 crotchets)',
+      question: 'What value is this note?',
+      abc: 'X:1\nM:4/2\nL:1/8\nK:C\nV:1 clef=treble\nC16||',
+      explanation: 'A breve note lasts for two semibreves, which is eight crotchets.',
+      options: ['Two semibreves (8 crotchets)', 'One semibreve (4 crotchets)', 'One minim (2 crotchets)', 'Three minims (6 crotchets)'],
+    },
+    {
+      answer: 'Two semibreves (8 crotchets)',
       question: 'What value is this rest?',
       abc: 'X:1\nM:4/2\nL:1/8\nK:C\nV:1 clef=treble\nz16||',
       explanation: 'A breve rest lasts for two semibreves.',
@@ -838,6 +1037,7 @@ function makeAdvancedRhythmQuestion() {
   return {
     id: `advanced-rhythm-${example.answer.replaceAll(' ', '-').toLowerCase()}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'time-signatures',
+    questionForm: 'rhythm-value',
     grade: 4,
     answerType: 'rhythm-identification',
     question: example.question,
@@ -847,6 +1047,27 @@ function makeAdvancedRhythmQuestion() {
     explanation: example.explanation,
     image: null,
     notation: { abc: example.abc, alt: example.answer },
+    userAnswer: null,
+  };
+}
+
+function makeIrregularDivisionQuestion() {
+  const example = randomFrom([
+    { name: 'Quintuplet', abc: 'X:1\nM:4/4\nL:1/8\nK:C\nV:1 clef=treble\n(5CDEFG', explanation: 'A quintuplet divides a simple time value into five equal notes instead of its usual division.' },
+    { name: 'Septuplet', abc: 'X:1\nM:4/4\nL:1/8\nK:C\nV:1 clef=treble\n(7CDEFGAB', explanation: 'A septuplet divides a simple time value into seven equal notes instead of its usual division.' },
+  ]);
+  return {
+    id: `irregular-division-${example.name.toLowerCase()}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'time-signatures',
+    questionForm: 'irregular-division',
+    grade: CURRICULUM.questionFormGrades.irregularRhythm,
+    question: 'What irregular division is shown?',
+    answer: example.name,
+    correct: example.name,
+    options: shuffle([example.name, ...['Duplet', 'Triplet', 'Quintuplet', 'Septuplet'].filter((name) => name !== example.name).slice(0, 3)]),
+    explanation: example.explanation,
+    image: null,
+    notation: { abc: example.abc, alt: example.name },
     userAnswer: null,
   };
 }
@@ -893,6 +1114,7 @@ function makeRestIdentificationQuestion() {
   return {
     id: `rest-identification-${signature.label}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'time-signatures',
+    questionForm: 'missing-rest',
     grade: signature.grade,
     answerType: 'rest-identification',
     question: 'What is the value of each missing rest?',
@@ -936,6 +1158,7 @@ function makeKeySignatureQuestion() {
     id: `key-signature-${signature.key.replaceAll('♯', 'sharp').replaceAll('♭', 'flat').replaceAll(' ', '-')}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'key-signatures',
     grade: signature.grade,
+    questionForm: 'key-signature-builder',
     answerType: 'key-signature',
     question: `Give the key signature for ${signature.key}.`,
     answer: correct,
@@ -1020,6 +1243,7 @@ function makeScaleQuestion() {
     id: `scale-identification-${Math.random().toString(36).slice(2, 8)}`,
     category: 'key-signatures',
     grade: scaleGrade,
+    questionForm: 'scale-identification',
     answerType: 'scale-identification',
     question: 'Identify this scale.',
     answer: scale.answer,
@@ -1044,6 +1268,7 @@ function makeScaleDegreeQuestion() {
     id: `scale-degree-${key}-${degree}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'key-signatures',
     grade: CURRICULUM.questionFormGrades.scaleDegree,
+    questionForm: 'scale-degree',
     question: `What is the technical name of this note in ${keyName}?`,
     answer: degreeNames[degree],
     correct: degreeNames[degree],
@@ -1062,6 +1287,7 @@ function makeChromaticScaleQuestion() {
     id: `chromatic-scale-${Math.random().toString(36).slice(2, 8)}`,
     category: 'key-signatures',
     grade: CURRICULUM.questionFormGrades.chromaticScale,
+    questionForm: 'chromatic-scale',
     question: 'Identify this scale.',
     answer: 'Chromatic scale',
     correct: 'Chromatic scale',
@@ -1085,22 +1311,35 @@ function sampleQuestions(questions, count) {
 }
 
 function selectQuestionsByGrade(candidates, questionCount, maximumGrade) {
+  return selectBalancedQuestionsByGrade(candidates, questionCount, maximumGrade);
+}
+
+function selectBalancedQuestionsByGrade(candidates, questionCount, maximumGrade) {
   const eligible = candidates.filter((question) => question.grade <= maximumGrade);
   if (!eligible.length) return [];
-
-  // Prefer the selected grade. Until a future grade has content, use the
-  // highest available grade below it so Grade 4/5 selections remain useful.
   const focusGrade = eligible.some((question) => question.grade === maximumGrade)
     ? maximumGrade
     : Math.max(...eligible.map((question) => question.grade));
-  const focusQuestions = eligible.filter((question) => question.grade === focusGrade);
-  const lowerGradeQuestions = eligible.filter((question) => question.grade < focusGrade);
-  const focusCount = lowerGradeQuestions.length ? Math.ceil(questionCount / 2) : questionCount;
-  const remainingCount = questionCount - focusCount;
-
+  const focusPool = eligible.filter((question) => question.grade === focusGrade);
+  const lowerPool = eligible.filter((question) => question.grade < focusGrade);
+  const focusCount = lowerPool.length ? Math.ceil(questionCount / 2) : questionCount;
+  const selectBand = (pool, count) => {
+    const selected = [];
+    const formCounts = new Map();
+    for (let index = 0; index < count; index += 1) {
+      const availableForms = [...new Set(pool.map((question) => question.questionForm || 'default'))];
+      const leastUsed = Math.min(...availableForms.map((form) => formCounts.get(form) || 0));
+      const forms = availableForms.filter((form) => (formCounts.get(form) || 0) === leastUsed);
+      const choice = randomFrom(pool.filter((question) => forms.includes(question.questionForm || 'default')));
+      selected.push({ ...choice });
+      const form = choice.questionForm || 'default';
+      formCounts.set(form, (formCounts.get(form) || 0) + 1);
+    }
+    return selected;
+  };
   return shuffle([
-    ...sampleQuestions(focusQuestions, focusCount),
-    ...sampleQuestions(lowerGradeQuestions.length ? lowerGradeQuestions : focusQuestions, remainingCount),
+    ...selectBand(focusPool, focusCount),
+    ...selectBand(lowerPool.length ? lowerPool : focusPool, questionCount - focusCount),
   ]);
 }
 
@@ -1120,27 +1359,37 @@ function createIntervalsTest(questionCount, maximumGrade) {
   const candidates = [
     ...namedQuestions,
     ...runtimeQuestionPool(makeIntervalRecognitionQuestion, questionCount),
+    ...runtimeQuestionPool(makeCompoundIntervalRecognitionQuestion, questionCount),
   ];
   return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
 }
 
 function createPitchesTest(questionCount, maximumGrade) {
-  return selectQuestionsByGrade(runtimeQuestionPool(() => (Math.random() < 0.35 ? makeEnharmonicQuestion() : makePitchQuestion()), questionCount), questionCount, maximumGrade);
+  const makers = [makePitchQuestion, makePitchQuestion, makeEnharmonicQuestion, makeInstrumentTranspositionQuestion];
+  return selectQuestionsByGrade(runtimeQuestionPool(() => randomFrom(makers)(), questionCount), questionCount, maximumGrade);
 }
 
 function createTonicTriadsTest(questionCount, maximumGrade) {
-  return selectQuestionsByGrade(runtimeQuestionPool(() => (Math.random() < 0.5 ? makeTonicTriadQuestion() : makeTonicTriadQuestion(randomFrom([4, 5]))), questionCount), questionCount, maximumGrade);
+  const makers = [
+    () => makeTonicTriadQuestion(),
+    () => makeTonicTriadQuestion(randomFrom([4, 5])),
+    () => makeTonicTriadQuestion(2),
+    makeTriadInversionQuestion,
+    makeCadenceQuestion,
+  ];
+  return selectQuestionsByGrade(runtimeQuestionPool(() => randomFrom(makers)(), questionCount), questionCount, maximumGrade);
 }
 
 function createTimeSignaturesTest(questionCount, maximumGrade) {
-  const makers = [makeTimeSignatureQuestion, makeRestIdentificationQuestion, makeTimeSignatureClassificationQuestion, makeAdvancedRhythmQuestion];
+  const makers = [makeTimeSignatureQuestion, makeRestIdentificationQuestion, makeTimeSignatureClassificationQuestion, makeAdvancedRhythmQuestion, makeIrregularDivisionQuestion];
   const candidates = runtimeQuestionPool(() => randomFrom(makers)(), questionCount);
   return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
 }
 
 function createKeySignaturesTest(questionCount, maximumGrade) {
-  const candidates = runtimeQuestionPool(() => randomFrom([makeKeySignatureQuestion, makeScaleQuestion, makeScaleDegreeQuestion, makeChromaticScaleQuestion])(), questionCount);
-  return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
+  const makers = [makeKeySignatureQuestion, makeScaleQuestion, makeScaleDegreeQuestion, makeChromaticScaleQuestion];
+  const candidates = makers.flatMap((maker) => runtimeQuestionPool(maker, questionCount));
+  return selectBalancedQuestionsByGrade(candidates, questionCount, maximumGrade);
 }
 
 function setActiveCategory(category) {

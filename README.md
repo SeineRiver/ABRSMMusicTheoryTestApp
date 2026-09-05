@@ -1,8 +1,8 @@
 # ABRSM Music Theory Test App
 
-A simple, strictly client-side mock-test application primarily covering ABRSM Music Theory Grades 1–4.
+A simple, strictly client-side mock-test application primarily covering ABRSM Music Theory Grades 1–5.
 
-Current release: **1.4.0**
+Current release: **1.5.0**
 
 ## How to use
 
@@ -24,8 +24,13 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Choice-based questions have four answer choices: one correct answer and three distractors.
 - Questions are answered one at a time.
 - The five-dot grade selector sets the highest grade in a test. About half the questions use that highest available grade and the rest are drawn from lower grades.
-- Grade 4 Terms & Signs includes Italian and French directions, string techniques, piano pedal signs, and ornament recognition.
-- Grade 4 practice adds five-accidental keys, alto-clef pitch reading, enharmonic equivalents, chromatic scales, technical scale-degree names, subdominant and dominant triads, extended compound metres, and recognition of duplets, double dots, and breve rests.
+- Every category uses the same sampler: it balances available question forms within each grade band while keeping about half the test at the selected highest grade.
+- Grade 4 Terms & Signs includes Italian and French directions, string techniques, piano pedal signs, and illustrated ornament recognition.
+- Grade 5 Terms & Signs adds the remaining supplied Italian, French, and German directions and expressive markings.
+- Grade 5 time-signature practice adds 5/4, 7/4, 5/8, and 7/8, with valid irregular beat groupings plus quintuplet and septuplet recognition.
+- Grade 5 pitch practice adds tenor-clef reading, six-sharp and six-flat key signatures, and concert-pitch transposition for B♭, A, and F instruments.
+- Grade 5 interval practice includes compound intervals; triad practice adds supertonic triads, inversion recognition, and perfect, plagal, and imperfect cadences in C, G, D, and F major.
+- Grade 4 practice adds five-accidental keys, alto-clef pitch reading, enharmonic equivalents, chromatic scales, technical scale-degree names, subdominant and dominant triads, extended compound metres, and recognition of duplets, double dots, and breve notes and rests.
 - An optional timed mode gives 20 seconds per question; unanswered questions count as incorrect.
 - The selected category, Grade ceiling, per-category question count, and timed-mode setting are saved locally in the browser and restored when the app is reopened.
 - Every generated question carries the earliest applicable syllabus grade in a central curriculum map. This keeps the current mixed-level practice ready for a later Grade 4 or Grade 5 filter.
@@ -50,7 +55,7 @@ The maintained ground truth for the app is the PDF question bank:
 
 [`output/pdf/abrsm-terms-and-signs-grades-1-3.pdf`](./output/pdf/abrsm-terms-and-signs-grades-1-3.pdf)
 
-The Grade 1–3 PDF is the canonical reference for those terms-and-signs questions, answers, grade grouping, and notation graphics. Grade 4 terms were initially drawn from the supplied Italian and French PPSX presentations and reconciled with the maintained Grade 4 curriculum list. The question data in [`app.js`](./app.js) is the client-side runtime copy used by the application. Runtime-generated interval, time-signature, key-signature, and scale questions are defined in `app.js`; their grade metadata is maintained in the central `CURRICULUM` map.
+The Grade 1–3 PDF is the canonical reference for those terms-and-signs questions, answers, grade grouping, and notation graphics. Grade 4 terms were initially drawn from the supplied Italian and French PPSX presentations and reconciled with the maintained Grade 4 curriculum list. Grade 5 terms are the remaining entries in the maintained supplied list that do not already appear in Grades 1–4. The question data in [`app.js`](./app.js) is the client-side runtime copy used by the application. Runtime-generated interval, time-signature, key-signature, and scale questions are defined in `app.js`; their grade metadata is maintained in the central `CURRICULUM` map.
 
 The PDF was compiled from:
 

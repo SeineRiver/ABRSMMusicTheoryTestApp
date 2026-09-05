@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 1.3.0';
+const APP_VERSION = 'Version 1.4.0';
 
 const RAW_BANK = {
   1: [
@@ -22,7 +22,8 @@ const RAW_BANK = {
     ['Una corda means:', 'Press the left pedal (softer sound)'], ['Tre corda means:', 'Release the left pedal'], ['This pedal line means:', 'Indicates when to depress and release the sustain (right) pedal', 'assets/grade4/pedal-line.svg'],
     ['The tr sign means:', 'Trill: rapid alternation between the note and the note above', 'assets/grade4/trill.svg'], ['This turn sign means:', 'Turn: note above, main note, note below, main note', 'assets/grade4/turn.svg'], ['This upper mordent sign means:', 'Upper mordent: main note, note above, main note quickly', 'assets/grade4/upper-mordent.svg'], ['This lower mordent sign means:', 'Lower mordent: main note, note below, main note quickly', 'assets/grade4/lower-mordent.svg'], ['This slashed grace note means:', 'Acciaccatura: a crushed grace note played as quickly as possible before the main note', 'assets/grade4/acciaccatura.svg'], ['This unslashed grace note means:', 'Appoggiatura: an expressive grace note that takes a fixed portion of the main note\'s value', 'assets/grade4/appoggiatura.svg'],
     ['a means:', 'To, at'], ['Animé means:', 'Animated, lively'], ['Assez means:', 'Enough, sufficiently'], ['Avec means:', 'With'], ['Cedez means:', 'Yield, relax the speed'], ['Douce means:', 'Sweet'], ['En dehors means:', 'Prominent'], ['Et means:', 'And'], ['Legerement means:', 'Light'], ['Lent means:', 'Slow'], ['Mais means:', 'But'], ['Moins means:', 'Less'], ['Modéré means:', 'At a moderate speed'], ['Non means:', 'Not'], ['Peu means:', 'Little'], ['Plus means:', 'More'], ['Presser means:', 'Hurry'], ['Ralentir means:', 'Slow down'], ['Retenu means:', 'Held back'], ['Sans means:', 'Without'], ['Tres means:', 'Very'], ['Un, une means:', 'One'], ['Vif means:', 'Lively'], ['Vite means:', 'Quick']
-  ]
+  ],
+  5: []
 };
 
 // Short score excerpts are shared where the printed marking is the teaching point.
@@ -182,7 +183,39 @@ const BANK = Object.fromEntries(
 window.ABRSM_QUESTION_BANK = BANK;
 
 const TIMER_SECONDS = 20;
-const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: 'terms', grade: 3, timerEnabled: false, timerId: null, timerDeadline: null };
+const PREFERENCES_STORAGE_KEY = 'abrsm-music-theory-quiz-preferences-v1';
+const CATEGORY_DEFAULT_LENGTHS = Object.freeze({ terms: 15, intervals: 10, pitches: 10, 'tonic-triads': 10, 'time-signatures': 10, 'key-signatures': 10 });
+
+function loadPreferences() {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}');
+    const category = Object.hasOwn(CATEGORY_DEFAULT_LENGTHS, value.category) ? value.category : 'terms';
+    const grade = Number.isInteger(value.grade) && value.grade >= 1 && value.grade <= 5 ? value.grade : 3;
+    const questionCounts = Object.fromEntries(Object.entries(CATEGORY_DEFAULT_LENGTHS).map(([name, fallback]) => {
+      const count = value.questionCounts?.[name];
+      return [name, [5, 10, 15].includes(count) ? count : fallback];
+    }));
+    return { category, grade, timerEnabled: Boolean(value.timerEnabled), questionCounts };
+  } catch (error) {
+    return { category: 'terms', grade: 3, timerEnabled: false, questionCounts: { ...CATEGORY_DEFAULT_LENGTHS } };
+  }
+}
+
+const preferences = loadPreferences();
+const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: preferences.category, grade: preferences.grade, timerEnabled: preferences.timerEnabled, questionCounts: preferences.questionCounts, timerId: null, timerDeadline: null };
+
+function savePreferences() {
+  try {
+    window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify({
+      category: state.category,
+      grade: state.grade,
+      timerEnabled: state.timerEnabled,
+      questionCounts: state.questionCounts,
+    }));
+  } catch (error) {
+    // The quiz continues normally if browser storage is unavailable.
+  }
+}
 const $ = (id) => document.getElementById(id);
 document.querySelectorAll('[data-app-version]').forEach((element) => { element.textContent = APP_VERSION; });
 const NOTE_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -190,6 +223,7 @@ const INTERVAL_DIATONIC_STEPS = { m2: 1, M2: 1, m3: 2, M3: 2, P4: 3, P5: 4, m6: 
 const SAFE_ROOT_OCTAVES = {
   treble: { C: [4, 5], D: [4, 5], E: [4, 5], F: [4, 5], G: [4, 5], A: [4, 5], B: [4, 5] },
   bass: { C: [3, 4], D: [3, 4], E: [2, 3], F: [2, 3], G: [2, 3], A: [2, 3], B: [2, 3] },
+  alto: { C: [4, 5], D: [4, 5], E: [4, 5], F: [4, 5], G: [3, 4], A: [3, 4], B: [3, 4] },
 };
 // The app keeps the syllabus data separate from question generation so that
 // later Grade 4/5 content can be added without changing existing generators.
@@ -200,16 +234,23 @@ const CURRICULUM = Object.freeze({
     'A minor': 2, 'E minor': 2, 'D minor': 2,
     'E major': 3, 'A♭ major': 3,
     'B minor': 3, 'F♯ minor': 3, 'C♯ minor': 3, 'G minor': 3, 'C minor': 3, 'F minor': 3,
+    'B major': 4, 'G♯ minor': 4, 'D♭ major': 4, 'B♭ minor': 4,
   }),
   timeSignatureGrades: Object.freeze({
     '2/4': 1, '3/4': 1, '4/4': 1,
     '2/2': 2, '3/2': 2, '4/2': 2, '3/8': 2,
     '6/8': 3, '9/8': 3, '12/8': 3,
+    '6/4': 4, '9/4': 4, '12/4': 4,
   }),
   questionFormGrades: Object.freeze({
     namedInterval: 3,
     intervalRecognition: 3,
     timeSignatureClassification: 4,
+    altoClef: 4,
+    enharmonic: 4,
+    scaleDegree: 4,
+    chromaticScale: 4,
+    functionalTriad: 4,
   }),
   categoryMinimumGrades: Object.freeze({
     terms: 1,
@@ -224,6 +265,7 @@ const TIME_SIGNATURES = [
   { top: 2, bottom: 4 }, { top: 3, bottom: 4 }, { top: 4, bottom: 4 },
   { top: 2, bottom: 2 }, { top: 3, bottom: 2 }, { top: 4, bottom: 2 },
   { top: 3, bottom: 8 }, { top: 6, bottom: 8 }, { top: 9, bottom: 8 }, { top: 12, bottom: 8 },
+  { top: 6, bottom: 4 }, { top: 9, bottom: 4 }, { top: 12, bottom: 4 },
 ].map((signature) => {
   const label = `${signature.top}/${signature.bottom}`;
   return Object.freeze({ ...signature, label, grade: CURRICULUM.timeSignatureGrades[label] });
@@ -243,10 +285,12 @@ const KEY_SIGNATURES = [
   ['D major', 'B minor', 'sharp', ['F', 'C']],
   ['A major', 'F♯ minor', 'sharp', ['F', 'C', 'G']],
   ['E major', 'C♯ minor', 'sharp', ['F', 'C', 'G', 'D']],
+  ['B major', 'G♯ minor', 'sharp', ['F', 'C', 'G', 'D', 'A']],
   ['F major', 'D minor', 'flat', ['B']],
   ['B♭ major', 'G minor', 'flat', ['B', 'E']],
   ['E♭ major', 'C minor', 'flat', ['B', 'E', 'A']],
   ['A♭ major', 'F minor', 'flat', ['B', 'E', 'A', 'D']],
+  ['D♭ major', 'B♭ minor', 'flat', ['B', 'E', 'A', 'D', 'G']],
 ].flatMap(([major, minor, accidental, notes]) => [
   { key: major, accidental, notes, grade: CURRICULUM.keyGrades[major] }, { key: minor, accidental, notes, grade: CURRICULUM.keyGrades[minor] },
 ]);
@@ -256,10 +300,12 @@ const SCALE_TEMPLATES = [
   { major: ['D major', 'D', ['D', 'E', 'F#', 'G', 'A', 'B', 'C#', 'D']], minor: ['B minor', 'Bm', ['B', 'C#', 'D', 'E', 'F#', 'G', 'A', 'B']] },
   { major: ['A major', 'A', ['A', 'B', 'C#', 'D', 'E', 'F#', 'G#', 'A']], minor: ['F♯ minor', 'F#m', ['F#', 'G#', 'A', 'B', 'C#', 'D', 'E', 'F#']] },
   { major: ['E major', 'E', ['E', 'F#', 'G#', 'A', 'B', 'C#', 'D#', 'E']], minor: ['C♯ minor', 'C#m', ['C#', 'D#', 'E', 'F#', 'G#', 'A', 'B', 'C#']] },
+  { major: ['B major', 'B', ['B', 'C#', 'D#', 'E', 'F#', 'G#', 'A#', 'B']], minor: ['G♯ minor', 'G#m', ['G#', 'A#', 'B', 'C#', 'D#', 'E', 'F#', 'G#']] },
   { major: ['F major', 'F', ['F', 'G', 'A', 'Bb', 'C', 'D', 'E', 'F']], minor: ['D minor', 'Dm', ['D', 'E', 'F', 'G', 'A', 'Bb', 'C', 'D']] },
   { major: ['B♭ major', 'Bb', ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A', 'Bb']], minor: ['G minor', 'Gm', ['G', 'A', 'Bb', 'C', 'D', 'Eb', 'F', 'G']] },
   { major: ['E♭ major', 'Eb', ['Eb', 'F', 'G', 'Ab', 'Bb', 'C', 'D', 'Eb']], minor: ['C minor', 'Cm', ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb', 'C']] },
   { major: ['A♭ major', 'Ab', ['Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'G', 'Ab']], minor: ['F minor', 'Fm', ['F', 'G', 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F']] },
+  { major: ['D♭ major', 'Db', ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'C', 'Db']], minor: ['B♭ minor', 'Bbm', ['Bb', 'C', 'Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb']] },
 ];
 const SCALE_QUESTIONS = SCALE_TEMPLATES.flatMap(({ major, minor }) => {
   const [majorName, majorKey, majorNotes] = major;
@@ -509,7 +555,7 @@ function makePitchQuestion() {
   const template = randomFrom(SCALE_TEMPLATES.slice(1));
   const [scaleName, key, scaleNotes] = randomFrom([template.major, template.minor]);
   const note = randomFrom(scaleNotes.slice(0, -1));
-  const clef = randomFrom(['treble', 'bass']);
+  const clef = randomFrom(['treble', 'bass', 'alto']);
   const octave = randomFrom(SAFE_ROOT_OCTAVES[clef][note[0]]);
   const signatureNotes = [...new Set(scaleNotes.filter((scaleNote) => scaleNote.length > 1).map((scaleNote) => scaleNote[0]))];
   const noteIndex = NOTE_LETTERS.indexOf(note[0]);
@@ -523,7 +569,7 @@ function makePitchQuestion() {
   return {
     id: `pitch-${key}-${note}-${clef}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'pitches',
-    grade: CURRICULUM.keyGrades[scaleName],
+    grade: Math.max(CURRICULUM.keyGrades[scaleName], clef === 'alto' ? CURRICULUM.questionFormGrades.altoClef : 1),
     question: 'Name this note.',
     answer: correct,
     correct,
@@ -538,28 +584,63 @@ function makePitchQuestion() {
   };
 }
 
-function makeTonicTriadQuestion() {
+function makeEnharmonicQuestion() {
+  const pairs = [
+    ['C#', 'Db'], ['D#', 'Eb'], ['F#', 'Gb'], ['G#', 'Ab'], ['A#', 'Bb'],
+    ['C##', 'D'], ['Dbb', 'C'], ['F##', 'G'], ['Gbb', 'F'], ['A##', 'B'], ['Bbb', 'A'],
+  ];
+  const [written, equivalent] = randomFrom(pairs);
+  const clef = randomFrom(['treble', 'alto', 'bass']);
+  const octave = randomFrom(SAFE_ROOT_OCTAVES[clef][written[0]]);
+  const options = [equivalent, ...shuffle(pairs.map(([, option]) => option).filter((option) => option !== equivalent)).slice(0, 3)];
+  return {
+    id: `enharmonic-${written}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'pitches',
+    grade: CURRICULUM.questionFormGrades.enharmonic,
+    question: 'Which note is enharmonically equivalent to this note?',
+    answer: formatPitchName(equivalent),
+    correct: formatPitchName(equivalent),
+    options: shuffle(options.map(formatPitchName)),
+    explanation: `${formatPitchName(written)} and ${formatPitchName(equivalent)} sound at the same pitch, even though they are written differently.`,
+    image: null,
+    notation: { abc: `X:1\nM:none\nL:1/4\nK:C\nV:1 clef=${clef}\n${noteToAbc(written, octave)}4`, alt: `${formatPitchName(written)} in ${clef} clef` },
+    userAnswer: null,
+  };
+}
+
+function raiseScaleNote(note) {
+  if (note.endsWith('b')) return note[0];
+  return note.endsWith('#') ? `${note}#` : `${note}#`;
+}
+
+function makeTonicTriadQuestion(degree = 1) {
   const template = randomFrom(SCALE_TEMPLATES);
   const [keyName, key, scaleNotes] = randomFrom([template.major, template.minor]);
   const signature = KEY_SIGNATURES.find(({ key: signatureKey }) => signatureKey === keyName);
-  const mode = randomFrom(['key-signature', 'written-accidentals']);
-  const triadNotes = [scaleNotes[0], scaleNotes[2], scaleNotes[4]];
+  const functionNames = { 1: 'tonic', 4: 'subdominant', 5: 'dominant' };
+  const mode = degree === 1 ? randomFrom(['key-signature', 'written-accidentals']) : 'written-accidentals';
+  const harmonicNotes = keyName.endsWith('minor')
+    ? scaleNotes.map((note, index) => (index === 6 ? raiseScaleNote(note) : note))
+    : scaleNotes;
+  const rootIndex = degree - 1;
+  const triadNotes = [0, 2, 4].map((offset) => harmonicNotes[(rootIndex + offset) % 7]);
   const expectedNotes = mode === 'key-signature' ? triadNotes.map((note) => note[0]) : triadNotes;
   const correct = JSON.stringify({
     signature: mode === 'key-signature' ? keySignatureValue(signature.accidental, signature.notes) : 'none',
     notes: expectedNotes,
   });
   return {
-    id: `tonic-triad-${key.replaceAll('#', 'sharp').replaceAll('b', 'flat')}-${mode}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `${functionNames[degree]}-triad-${key.replaceAll('#', 'sharp').replaceAll('b', 'flat')}-${mode}-${Math.random().toString(36).slice(2, 8)}`,
     category: 'tonic-triads',
-    grade: CURRICULUM.keyGrades[keyName],
+    grade: Math.max(CURRICULUM.keyGrades[keyName], degree === 1 ? 1 : CURRICULUM.questionFormGrades.functionalTriad),
     answerType: 'tonic-triad',
     triadMode: mode,
-    question: `Build the tonic triad of ${keyName}. ${mode === 'key-signature' ? 'Use the key signature.' : 'Use written accidentals — no key signature.'}`,
+    triadFunction: functionNames[degree],
+    question: `Build the ${functionNames[degree]} triad of ${keyName}. ${mode === 'key-signature' ? 'Use the key signature.' : 'Use written accidentals — no key signature.'}`,
     answer: correct,
     correct,
     options: [],
-    explanation: `${keyName} uses the tonic-triad notes ${triadNotes.map(formatPitchName).join(', ')}${mode === 'key-signature' ? '; the required accidentals belong in the key signature.' : '; write any required accidentals on the notes.'}`,
+    explanation: `${keyName} uses the ${functionNames[degree]}-triad notes ${triadNotes.map(formatPitchName).join(', ')}${mode === 'key-signature' ? '; the required accidentals belong in the key signature.' : '; write any required accidentals on the notes.'}`,
     image: null,
     notation: null,
     triad: { keyName, key, triadNotes, signature },
@@ -569,7 +650,7 @@ function makeTonicTriadQuestion() {
 
 function getTimeSignatureGroups(signature) {
   const beatUnits = 32 / signature.bottom;
-  if (signature.bottom === 8 && signature.top > 3 && signature.top % 3 === 0) {
+  if (signature.top > 3 && signature.top % 3 === 0) {
     return Array(signature.top / 3).fill(beatUnits * 3);
   }
   return Array(signature.top).fill(beatUnits);
@@ -632,7 +713,18 @@ function makeRestIdentificationBar(groups, clef, allowSemiquavers) {
     });
   });
   const restCount = randomFrom([1, 2]);
-  shuffle(descriptors.flat()).slice(0, restCount).forEach((descriptor) => { descriptor.missing = true; });
+  const slots = descriptors.flat();
+  const first = randomFrom(slots);
+  first.missing = true;
+  // Keep blanks separated. Adjacent hidden rests can admit more than one
+  // plausible reading, whereas separated slots retain the beat grouping.
+  if (restCount === 2) {
+    const separatedSlots = slots.filter((slot, index) => {
+      const firstIndex = slots.indexOf(first);
+      return Math.abs(index - firstIndex) > 1;
+    });
+    if (separatedSlots.length) randomFrom(separatedSlots).missing = true;
+  }
   return descriptors;
 }
 
@@ -662,7 +754,7 @@ function makeTimeSignatureNotation(signature) {
 function makeTimeSignatureQuestion() {
   const signature = randomFrom(TIME_SIGNATURES);
   const notation = makeTimeSignatureNotation(signature);
-  const compound = signature.bottom === 8 && signature.top > 3 && signature.top % 3 === 0;
+  const compound = signature.top > 3 && signature.top % 3 === 0;
   const options = [signature.label];
   shuffle(TIME_SIGNATURES).forEach(({ label }) => {
     const conflictsWithAnOption = options.some((option) => CONFUSING_TIME_SIGNATURES.get(option) === label);
@@ -686,7 +778,7 @@ function makeTimeSignatureQuestion() {
 }
 
 function timeSignatureClass(signature) {
-  const compound = signature.bottom === 8 && signature.top > 3 && signature.top % 3 === 0;
+  const compound = signature.top > 3 && signature.top % 3 === 0;
   const beats = compound ? signature.top / 3 : signature.top;
   return `${compound ? 'Compound' : 'Simple'} ${beats === 2 ? 'duple' : beats === 3 ? 'triple' : 'quadruple'}`;
 }
@@ -707,6 +799,54 @@ function makeTimeSignatureClassificationQuestion() {
     image: null,
     notation: null,
     timeSignaturePrompt: signature,
+    userAnswer: null,
+  };
+}
+
+function makeAdvancedRhythmQuestion() {
+  const examples = [
+    {
+      answer: 'A minim + a crotchet + a quaver (7 quavers)',
+      question: 'What value is this note?',
+      abc: 'X:1\nM:none\nL:1/8\nK:C\nV:1 clef=treble\nC7',
+      explanation: 'A double-dotted minim lasts seven quavers: a minim plus a crotchet and a quaver.',
+      options: ['A minim + a crotchet + a quaver (7 quavers)', 'A minim + a crotchet (6 quavers)', 'A minim + a quaver (5 quavers)', 'Two minims (8 quavers)'],
+    },
+    {
+      answer: 'Duplet',
+      question: 'What rhythmic grouping is shown?',
+      abc: 'X:1\nM:6/8\nL:1/8\nK:C\nV:1 clef=treble\n(2CD EFG',
+      explanation: 'A duplet fits two equal notes into the time normally occupied by three of the same value.',
+      options: ['Duplet', 'Triplet', 'Double-dotted rhythm', 'Syncopation'],
+    },
+    {
+      answer: 'A minim rest + a crotchet rest + a quaver rest (7 quavers)',
+      question: 'What value is this rest?',
+      abc: 'X:1\nM:none\nL:1/8\nK:C\nV:1 clef=bass\nz7',
+      explanation: 'A double-dotted minim rest lasts seven quavers: a minim plus a crotchet and a quaver.',
+      options: ['A minim rest + a crotchet rest + a quaver rest (7 quavers)', 'A minim rest + a crotchet rest (6 quavers)', 'A minim rest + a quaver rest (5 quavers)', 'Two minim rests (8 quavers)'],
+    },
+    {
+      answer: 'Two semibreves (8 crotchets)',
+      question: 'What value is this rest?',
+      abc: 'X:1\nM:4/2\nL:1/8\nK:C\nV:1 clef=treble\nz16||',
+      explanation: 'A breve rest lasts for two semibreves.',
+      options: ['Two semibreves (8 crotchets)', 'One semibreve (4 crotchets)', 'One minim (2 crotchets)', 'Three minims (6 crotchets)'],
+    },
+  ];
+  const example = randomFrom(examples);
+  return {
+    id: `advanced-rhythm-${example.answer.replaceAll(' ', '-').toLowerCase()}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'time-signatures',
+    grade: 4,
+    answerType: 'rhythm-identification',
+    question: example.question,
+    answer: example.answer,
+    correct: example.answer,
+    options: shuffle(example.options),
+    explanation: example.explanation,
+    image: null,
+    notation: { abc: example.abc, alt: example.answer },
     userAnswer: null,
   };
 }
@@ -892,6 +1032,47 @@ function makeScaleQuestion() {
   };
 }
 
+function makeScaleDegreeQuestion() {
+  const template = randomFrom(SCALE_TEMPLATES);
+  const [keyName, key, notes] = template.major;
+  const degreeNames = ['Tonic', 'Supertonic', 'Mediant', 'Subdominant', 'Dominant', 'Submediant', 'Leading note'];
+  const degree = Math.floor(Math.random() * 7);
+  const note = notes[degree];
+  const clef = randomFrom(['treble', 'alto', 'bass']);
+  const octave = randomFrom(SAFE_ROOT_OCTAVES[clef][note[0]]);
+  return {
+    id: `scale-degree-${key}-${degree}-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'key-signatures',
+    grade: CURRICULUM.questionFormGrades.scaleDegree,
+    question: `What is the technical name of this note in ${keyName}?`,
+    answer: degreeNames[degree],
+    correct: degreeNames[degree],
+    options: shuffle([degreeNames[degree], ...shuffle(degreeNames.filter((name) => name !== degreeNames[degree])).slice(0, 3)]),
+    explanation: `${formatPitchName(note)} is the ${degreeNames[degree].toLowerCase()} of ${keyName}.`,
+    image: null,
+    notation: { abc: `X:1\nM:none\nL:1/4\nK:${key}\nV:1 clef=${clef}\n${noteToAbc(scaleNoteWithAccidental(note, true, notes.filter((scaleNote) => scaleNote.length > 1).map((scaleNote) => scaleNote[0])), octave)}4`, alt: `${formatPitchName(note)} in ${keyName}` },
+    userAnswer: null,
+  };
+}
+
+function makeChromaticScaleQuestion() {
+  const chromaticNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'];
+  const notationNotes = chromaticNotes.map((note, index) => `${noteToAbc(note, index === chromaticNotes.length - 1 ? 5 : 4)}2`);
+  return {
+    id: `chromatic-scale-${Math.random().toString(36).slice(2, 8)}`,
+    category: 'key-signatures',
+    grade: CURRICULUM.questionFormGrades.chromaticScale,
+    question: 'Identify this scale.',
+    answer: 'Chromatic scale',
+    correct: 'Chromatic scale',
+    options: shuffle(['Chromatic scale', 'C major scale', 'C harmonic minor scale', 'C melodic minor scale']),
+    explanation: 'A chromatic scale moves by semitone throughout, using every pitch between the starting note and its octave.',
+    image: null,
+    notation: { abc: `X:1\nM:none\nL:1/8\nK:C\nV:1 clef=treble\n${notationNotes.join(' ')}`, alt: 'Ascending chromatic scale' },
+    userAnswer: null,
+  };
+}
+
 function sampleQuestions(questions, count) {
   if (!questions.length) return [];
   const selected = [];
@@ -944,21 +1125,21 @@ function createIntervalsTest(questionCount, maximumGrade) {
 }
 
 function createPitchesTest(questionCount, maximumGrade) {
-  return selectQuestionsByGrade(runtimeQuestionPool(makePitchQuestion, questionCount), questionCount, maximumGrade);
+  return selectQuestionsByGrade(runtimeQuestionPool(() => (Math.random() < 0.35 ? makeEnharmonicQuestion() : makePitchQuestion()), questionCount), questionCount, maximumGrade);
 }
 
 function createTonicTriadsTest(questionCount, maximumGrade) {
-  return selectQuestionsByGrade(runtimeQuestionPool(makeTonicTriadQuestion, questionCount), questionCount, maximumGrade);
+  return selectQuestionsByGrade(runtimeQuestionPool(() => (Math.random() < 0.5 ? makeTonicTriadQuestion() : makeTonicTriadQuestion(randomFrom([4, 5]))), questionCount), questionCount, maximumGrade);
 }
 
 function createTimeSignaturesTest(questionCount, maximumGrade) {
-  const makers = [makeTimeSignatureQuestion, makeRestIdentificationQuestion, makeTimeSignatureClassificationQuestion];
+  const makers = [makeTimeSignatureQuestion, makeRestIdentificationQuestion, makeTimeSignatureClassificationQuestion, makeAdvancedRhythmQuestion];
   const candidates = runtimeQuestionPool(() => randomFrom(makers)(), questionCount);
   return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
 }
 
 function createKeySignaturesTest(questionCount, maximumGrade) {
-  const candidates = runtimeQuestionPool(() => (Math.random() < 0.5 ? makeKeySignatureQuestion() : makeScaleQuestion()), questionCount);
+  const candidates = runtimeQuestionPool(() => randomFrom([makeKeySignatureQuestion, makeScaleQuestion, makeScaleDegreeQuestion, makeChromaticScaleQuestion])(), questionCount);
   return selectQuestionsByGrade(candidates, questionCount, maximumGrade);
 }
 
@@ -981,6 +1162,7 @@ function setActiveGrade(grade) {
   });
   if (CURRICULUM.categoryMinimumGrades[state.category] > grade) state.category = 'terms';
   setActiveCategory(state.category);
+  savePreferences();
 }
 
 function categoryLabel(category) {
@@ -1027,8 +1209,9 @@ function startQuestionTimer() {
   state.timerId = window.setInterval(tick, 200);
 }
 
-function createTest(questionCount = Number($('test-length').value), category = state.category) {
+function createTest(questionCount = state.questionCounts[state.category], category = state.category) {
   state.category = category;
+  state.questionCounts[category] = questionCount;
   setActiveCategory(category);
   state.test = state.category === 'intervals'
     ? createIntervalsTest(questionCount, state.grade)
@@ -1046,6 +1229,7 @@ function createTest(questionCount = Number($('test-length').value), category = s
   state.selected = null;
   state.locked = false;
   $('test-length').value = String(questionCount);
+  savePreferences();
   $('result-screen').classList.add('hidden');
   $('test-screen').classList.remove('hidden');
   renderQuestion();
@@ -1100,7 +1284,7 @@ function renderQuestion() {
   answers.classList.toggle('interval-answers', item.category === 'intervals');
   answers.classList.toggle('pitch-answers', item.category === 'pitches');
   answers.classList.toggle('tonic-triad-answers', item.answerType === 'tonic-triad');
-  answers.classList.toggle('time-signature-answers', item.category === 'time-signatures' && item.answerType !== 'time-classification');
+  answers.classList.toggle('time-signature-answers', item.category === 'time-signatures' && !item.answerType);
   answers.classList.toggle('time-classification-answers', item.answerType === 'time-classification');
   answers.classList.toggle('key-signature-answers', item.answerType === 'key-signature');
   answers.classList.toggle('scale-identification-answers', item.answerType === 'scale-identification');
@@ -1136,7 +1320,7 @@ function renderQuestion() {
     } else if (item.category === 'pitches') {
       button.classList.add('pitch-answer-option');
       button.innerHTML = `<strong>${letter}.</strong> ${option}`;
-    } else if (item.category === 'time-signatures' && item.answerType !== 'time-classification') {
+    } else if (item.category === 'time-signatures' && !item.answerType) {
       button.classList.add('time-signature-answer-option');
       button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong>${timeSignatureMarkMarkup({ label: option })}`;
     } else {
@@ -1270,7 +1454,7 @@ function renderTonicTriadAnswers(item) {
       ? JSON.stringify({ signature: item.triadMode === 'key-signature' ? keySignatureValue(signatureAccidental, selectedSignatureNotes) : 'none', notes: selectedNotes })
       : null;
     $('next-button').disabled = !state.selected;
-    $('next-button').textContent = state.selected ? 'Check answer' : item.triadMode === 'key-signature' && !canBuildChord ? 'Build the key signature first' : 'Build the tonic triad';
+    $('next-button').textContent = state.selected ? 'Check answer' : item.triadMode === 'key-signature' && !canBuildChord ? 'Build the key signature first' : `Build the ${item.triadFunction || 'tonic'} triad`;
   };
 
   if (item.triadMode === 'key-signature') {
@@ -1513,7 +1697,7 @@ function renderResults() {
 if ($('test-screen')) {
   $('next-button').addEventListener('click', nextQuestion);
   document.querySelectorAll('.category-button').forEach((button) => {
-    button.addEventListener('click', () => createTest(button.dataset.category === 'terms' ? 15 : 10, button.dataset.category));
+    button.addEventListener('click', () => createTest(state.questionCounts[button.dataset.category], button.dataset.category));
   });
   document.querySelectorAll('.grade-dot').forEach((button) => {
     button.addEventListener('click', () => {
@@ -1521,12 +1705,14 @@ if ($('test-screen')) {
       createTest(Number($('test-length').value));
     });
   });
-  $('test-length').addEventListener('change', (event) => createTest(Number(event.target.value)));
+  $('test-length').addEventListener('change', (event) => createTest(Number(event.target.value), state.category));
   $('timer-enabled').addEventListener('change', (event) => {
     state.timerEnabled = event.target.checked;
+    savePreferences();
     if (!state.locked) startQuestionTimer();
   });
-  $('restart-button').addEventListener('click', () => createTest(Number($('test-length').value)));
+  $('restart-button').addEventListener('click', () => createTest(state.questionCounts[state.category], state.category));
+  $('timer-enabled').checked = state.timerEnabled;
   setActiveGrade(state.grade);
-  createTest(15);
+  createTest(state.questionCounts[state.category], state.category);
 }

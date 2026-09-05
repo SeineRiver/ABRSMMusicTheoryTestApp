@@ -2,7 +2,7 @@
 
 A simple, strictly client-side mock-test application primarily covering ABRSM Music Theory Grades 1–4.
 
-Current release: **1.3.0**
+Current release: **1.4.0**
 
 ## How to use
 
@@ -25,7 +25,9 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Questions are answered one at a time.
 - The five-dot grade selector sets the highest grade in a test. About half the questions use that highest available grade and the rest are drawn from lower grades.
 - Grade 4 Terms & Signs includes Italian and French directions, string techniques, piano pedal signs, and ornament recognition.
+- Grade 4 practice adds five-accidental keys, alto-clef pitch reading, enharmonic equivalents, chromatic scales, technical scale-degree names, subdominant and dominant triads, extended compound metres, and recognition of duplets, double dots, and breve rests.
 - An optional timed mode gives 20 seconds per question; unanswered questions count as incorrect.
+- The selected category, Grade ceiling, per-category question count, and timed-mode setting are saved locally in the browser and restored when the app is reopened.
 - Every generated question carries the earliest applicable syllabus grade in a central curriculum map. This keeps the current mixed-level practice ready for a later Grade 4 or Grade 5 filter.
 - Progress and the current score are shown during the test.
 - After the final question, the result page lists incorrect answers alongside the correct answers.

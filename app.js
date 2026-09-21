@@ -475,22 +475,41 @@ function makeIntervalOptionNotation(item, option) {
 }
 
 function renderNotation(element, notation, width) {
-  element.replaceChildren();
   element.setAttribute('aria-label', notation.alt);
   element.classList.toggle('hide-time-signature', Boolean(notation.hideTimeSignature));
   const scale = notation.scale || 1;
-  window.ABCJS.renderAbc(element, notation.abc, {
-    staffwidth: width / scale,
-    scale,
-    add_classes: true,
-    ...(notation.lineBreaks ? { lineBreaks: notation.lineBreaks } : {}),
-    paddingtop: 2,
-    paddingbottom: 10,
-    paddingleft: 0,
-    paddingright: 0,
-  });
-  if (notation.hideTimeSignature) {
-    element.querySelectorAll('.abcjs-time-signature, .time-signature').forEach((timeSignature) => timeSignature.remove());
+  const container = element.closest('.question-notation-wrap, .review-notation, .key-signature-preview') || element.parentElement || element;
+  element.__notationObserver?.disconnect();
+  const initialWidth = container.clientWidth || container.getBoundingClientRect?.().width || width;
+  const draw = (availableWidth) => {
+    availableWidth = Math.max(220, Math.floor(availableWidth));
+    element.replaceChildren();
+    window.ABCJS.renderAbc(element, notation.abc, {
+      staffwidth: availableWidth / scale,
+      scale,
+      add_classes: true,
+      ...(notation.lineBreaks ? { lineBreaks: notation.lineBreaks } : {}),
+      paddingtop: 2,
+      paddingbottom: 10,
+      paddingleft: 0,
+      paddingright: 0,
+    });
+    if (notation.hideTimeSignature) {
+      element.querySelectorAll('.abcjs-time-signature, .time-signature').forEach((timeSignature) => timeSignature.remove());
+    }
+  };
+  draw(initialWidth - 28);
+  if (window.ResizeObserver && container !== element) {
+    let lastWidth = Math.floor(container.clientWidth || container.getBoundingClientRect().width);
+    const observer = new window.ResizeObserver(([entry]) => {
+      const nextWidth = Math.floor(entry.contentRect.width);
+      if (nextWidth > 0 && Math.abs(nextWidth - lastWidth) > 1) {
+        lastWidth = nextWidth;
+        draw(nextWidth);
+      }
+    });
+    observer.observe(container);
+    element.__notationObserver = observer;
   }
 }
 
@@ -1504,6 +1523,8 @@ function renderQuestion() {
 
   const imageWrap = $('question-image-wrap');
   const notationWrap = $('question-notation-wrap');
+  $('question-notation').__notationObserver?.disconnect();
+  $('question-notation').__notationObserver = null;
   if (item.timeSignaturePrompt) {
     $('question-image').removeAttribute('src');
     imageWrap.classList.add('hidden');
@@ -1513,8 +1534,8 @@ function renderQuestion() {
     $('question-image').removeAttribute('src');
     imageWrap.classList.add('hidden');
     $('question-notation').classList.remove('question-time-signature');
-    renderNotation($('question-notation'), item.notation, item.notation.timeSignatureNotation ? 629 : 520);
     notationWrap.classList.remove('hidden');
+    renderNotation($('question-notation'), item.notation, item.notation.timeSignatureNotation ? 629 : 520);
   } else if (item.image) {
     $('question-image').src = item.image;
     imageWrap.classList.remove('hidden');

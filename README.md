@@ -48,6 +48,7 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Scale-identification questions show eight semibreves in treble or bass clef, ascending or descending, with major, harmonic-minor, and melodic-minor scales. Scales may use a key signature or accidentals written on the notes.
 - Melodic-minor descending scales correctly use the natural-minor form, and tonic endpoints remain the same base note.
 - Musical notation is rendered client-side with the bundled ABCJS runtime; no server or package installation is required.
+- Music notation uses the available container width with controlled ABCJS layout, resize-aware reflow, and mobile overflow handling for narrow phone screens and orientation changes.
 
 ## Ground truth and question bank
 

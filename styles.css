@@ -130,9 +130,11 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .primary-button { border: 0; border-radius: 13px; background: var(--ink); color: #fff; padding: 15px 20px; font: inherit; font-weight: 800; cursor: pointer; transition: background 160ms ease, transform 160ms ease, opacity 160ms ease; }
 .primary-button:hover:not(:disabled), .primary-button:focus-visible { background: var(--blue-dark); transform: translateY(-1px); outline: none; }
 .primary-button:disabled { opacity: 0.45; cursor: not-allowed; }
-.question-image-wrap, .question-notation-wrap { margin: -4px 0 28px; padding: 14px; border-radius: 14px; background: #fbfcfd; border: 1px solid #edf1f5; }
+.question-image-wrap, .question-notation-wrap { margin: -4px 0 28px; padding: 14px; border-radius: 14px; background: #fbfcfd; border: 1px solid #edf1f5; min-width: 0; }
 .question-image-wrap img { display: block; max-width: 100%; width: auto; max-height: 180px; object-fit: contain; }
-.question-notation-wrap svg { display: block; max-width: 100%; height: auto; }
+.question-notation-wrap { overflow-x: auto; overflow-y: visible; -webkit-overflow-scrolling: touch; }
+.question-notation-wrap > div { min-width: 0; width: 100%; }
+.question-notation-wrap svg { display: block; width: 100%; max-width: 100%; height: auto; }
 .question-notation-wrap .abcjs-staff path { shape-rendering: crispEdges; }
 .question-notation-wrap .abcjs-notehead { paint-order: stroke; stroke: var(--paper); stroke-width: 1px; }
 .hidden { display: none !important; }

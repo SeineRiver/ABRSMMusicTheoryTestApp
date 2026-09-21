@@ -483,12 +483,18 @@ function renderNotation(element, notation, width) {
   const initialWidth = container.clientWidth || container.getBoundingClientRect?.().width || width;
   const draw = (availableWidth) => {
     availableWidth = Math.max(220, Math.floor(availableWidth));
+    const narrowLayout = availableWidth < 480;
+    const lineBreaks = notation.barCount > 1
+      ? narrowLayout
+        ? Array.from({ length: notation.barCount - 1 }, (_, index) => index + 1)
+        : notation.lineBreaks
+      : notation.lineBreaks;
     element.replaceChildren();
     window.ABCJS.renderAbc(element, notation.abc, {
       staffwidth: availableWidth / scale,
       scale,
       add_classes: true,
-      ...(notation.lineBreaks ? { lineBreaks: notation.lineBreaks } : {}),
+      ...(lineBreaks ? { lineBreaks } : {}),
       paddingtop: 2,
       paddingbottom: 10,
       paddingleft: 0,
@@ -1147,7 +1153,8 @@ function makeRestIdentificationQuestion() {
       alt: `Two bars in ${signature.label} with numbered missing rests in ${clef} clef`,
       timeSignatureNotation: true,
       scale: 1.2,
-      lineBreaks: [1],
+      barCount: 2,
+      lineBreaks: [2],
     },
     restCount: rests.length,
     userAnswer: null,

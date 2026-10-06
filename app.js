@@ -1,18 +1,18 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 1.5.0';
+const APP_VERSION = 'Version 1.6.0';
 
 const RAW_BANK = {
   1: [
     ['Accelerando means:', 'Gradually getting quicker'], ['Adagio means:', 'Slow'], ['Allegretto means:', 'Fairly quick—but not as quick as allegro'], ['Allegro means:', 'Quick'], ['Andante means:', 'At a walking pace'], ['Cantabile means:', 'In a singing style'], ['Crescendo means:', 'Gradually getting louder'], ['Da capo means:', 'Repeat from the beginning'], ['Dal segno means:', 'Repeat from the sign'], ['Decrescendo means:', 'Gradually getting quieter'], ['Diminuendo means:', 'Gradually getting quieter'], ['Fine means:', 'The end'], ['f (forte) means:', 'Loud'], ['ff (fortissimo) means:', 'Very loud'], ['Legato means:', 'Smoothly'], ['Lento means:', 'Slow'], ['Mezzo means:', 'Half'], ['Maestoso means:', 'Majestic'], ['mf (mezzo forte) means:', 'Moderately loud'], ['mp (mezzo piano) means:', 'Moderately quiet'], ['Moderato means:', 'Moderately'], ['p (piano) means:', 'Quiet'], ['pp (pianissimo) means:', 'Very quiet'], ['Poco means:', 'A little'], ['Rallentando (or rall.) means:', 'Gradually getting slower'], ['Ritardando (or rit.) means:', 'Gradually getting slower'], ['Ritenuto (or rit.) means:', 'Held back'], ['Staccato (or stacc.) means:', 'Detached'], ['Tempo means:', 'Speed/time'], ['These signs above and below the notes are:', 'Accents', 'assets/grade1/image5.png'], ['The dots above the notes are:', 'Staccato marks', 'assets/grade1/image6.png'], ['The sign above the last note means:', 'A pause', 'assets/grade1/image7.png'], ['The sign above these notes means:', 'Tie', 'assets/grade1/image8.png'], ['The two dots at the stave end mean:', 'Repeat last section', 'assets/grade1/image9.png'],
-    ['A tempo means:', "Return to the former speed ('in time')"], ['Al fine means:', 'Until the end'], ['Allegro moderato means:', 'Moderately quick'], ['Da capo al fine (D.C. al fine) means:', "From the beginning until 'fine'"], ['MM. crotchet = 96 means:', "Maelzel's metronome, 96 beats per minute"], ['Pause or fermata means:', 'Hold for longer than written'], ['Ottava sign (8va) means:', 'Play one octave higher or lower than written'], ['Poco a poco means:', 'Little by little']
+    ['A tempo means:', "Return to the former speed ('in time')"], ['Al fine means:', 'Until the end'], ['Allegro moderato means:', 'Moderately quick'], ['Da capo al fine (D.C. al fine) means:', "From the beginning until 'fine'"], ['MM. crotchet = 120 means:', "Maelzel's metronome, 120 beats per minute"], ['Pause or fermata means:', 'Hold for longer than written'], ['Ottava sign (8va) means:', 'Play one octave higher or lower than written'], ['Poco a poco means:', 'Little by little']
   ],
   2: [
     ['a means:', 'In the style of'], ['a, alla means:', 'In the manner of'], ['Allargando means:', 'Broadening'], ['Andantino means:', 'Slightly faster than andante'], ['Assai means:', 'Very'], ['Con, col means:', 'With'], ['Dolce means:', 'Sweet'], ['e, ed means:', 'And'], ['Espressivo means:', 'Expressive'], ['fp (forte-piano) means:', 'Loud then immediately quiet'], ['Giocoso means:', 'Playful'], ['Grave means:', 'Very slow, solemn'], ['Grazioso means:', 'Graceful'], ['Larghetto means:', 'Rather slow (but not as slow as largo)'], ['Largo means:', 'Slow'], ['Ma means:', 'But'], ['Maestoso means:', 'Majestic'], ['Meno means:', 'Less'], ['Molto means:', 'Much'], ['Mosso, moto means:', 'Movement'], ['Non means:', 'Not'], ['Piu means:', 'More'], ['Presto means:', 'Fast'], ['Senza means:', 'Without'], ['sf, sfz (sforzando) means:', 'Forced, accented'], ['Simile (or sim.) means:', 'In the same way'], ['Sostenuto means:', 'Sustained'], ['Tenuto means:', 'Held'], ['Troppo means:', 'Too much'], ['Vivace, vivo means:', 'Lively, quick'], ['Dots inside the slur mark mean:', 'Semi-staccato', 'assets/grade2/image5.png'], ['These wedge shapes above and below the notes mean:', 'Staccatissimo (super-staccato)', 'assets/grade2/image6.png'], ['The lines above and below these notes mean:', 'Tenuto (held with slight pressure)', 'assets/grade2/image7.png'],
     ['Alla marcia means:', 'In the style of a march'], ['Con moto means:', 'With movement'], ['Meno mosso means:', 'Less movement (slower)'], ['Non troppo means:', 'Not too much'], ['Piu mosso means:', 'More speed (faster)'], ['Accent sign means:', 'Play strongly'], ['Mezzo-staccato means:', 'Moderately short and detached'], ['Marcato sign means:', 'A strong accent'], ['Staccatissimo means:', 'Extremely short and detached']
   ],
   3: [
-    ['adagietto means:', 'Rather slow'], ['ad libitum, ad lib. means:', 'Play freely'], ['Agitato means:', 'Agitated'], ['Alla breve means:', 'With a minim beat'], ['Amore means:', 'Love'], ['Anima means:', 'Soul, spirit'], ['Animato means:', 'Animated, lively'], ['Ben means:', 'Well'], ['Brio means:', 'Vigour'], ['Comodo means:', 'Convenient'], ['Deciso means:', 'With determination'], ['Delicato means:', 'Delicate'], ['Energico means:', 'Energetic'], ['Forza means:', 'Force'], ['Largamente means:', 'Broadly'], ['Leggiero means:', 'Light, nimble'], ['Marcato, marc. means:', 'Emphatic, accented'], ['Marziale means:', 'In a military style'], ['Mesto means:', 'Sad'], ['Pesante means:', 'Heavy'], ['Prima, primo means:', 'First'], ['Risoluto means:', 'With determination'], ['Ritmico means:', 'Rhythmically'], ['Rubato, tempo rubato means:', 'With some freedom of time'], ['Scherzando, scherzoso means:', 'Playful, joking'], ['Seconda, secondo means:', 'Second'], ['Semplice means:', 'Simple, plain'], ['Sempre means:', 'Always'], ['Stringendo means:', 'Gradually getting faster'], ['Subito means:', 'Suddenly'], ['Tanto means:', 'So much'], ['Tranquillo means:', 'Calm'], ['Triste, tristamente means:', 'Sad, sorrowful'], ['Volta means:', 'Time'], ['What is the meaning of the two dots at the end of the stave?', 'Repeat previous section', 'assets/grade3/image5.png'], ['What does the line above the notes mean?', 'The slur', 'assets/grade3/image6.png'], ['What is the meaning of the dots above these notes?', 'Staccato marks', 'assets/grade3/image7.png'], ['What is the name of the line joining these two notes?', 'Tie', 'assets/grade3/image8.png'], ['What does a crotchet = 96 mean?', '96 crotchet beats per minute', 'assets/grade3/image9.png'],
+    ['adagietto means:', 'Rather slow'], ['ad libitum, ad lib. means:', 'Play freely'], ['Agitato means:', 'Agitated'], ['Alla breve means:', 'With a minim beat'], ['Amore means:', 'Love'], ['Anima means:', 'Soul, spirit'], ['Animato means:', 'Animated, lively'], ['Ben means:', 'Well'], ['Brio means:', 'Vigour'], ['Comodo means:', 'Convenient'], ['Deciso means:', 'With determination'], ['Delicato means:', 'Delicate'], ['Energico means:', 'Energetic'], ['Forza means:', 'Force'], ['Largamente means:', 'Broadly'], ['Leggiero means:', 'Light, nimble'], ['Marcato, marc. means:', 'Emphatic, accented'], ['Marziale means:', 'In a military style'], ['Mesto means:', 'Sad'], ['Pesante means:', 'Heavy'], ['Prima, primo means:', 'First'], ['Risoluto means:', 'With determination'], ['Ritmico means:', 'Rhythmically'], ['Rubato, tempo rubato means:', 'With some freedom of time'], ['Scherzando, scherzoso means:', 'Playful, joking'], ['Seconda, secondo means:', 'Second'], ['Semplice means:', 'Simple, plain'], ['Sempre means:', 'Always'], ['Stringendo means:', 'Gradually getting faster'], ['Subito means:', 'Suddenly'], ['Tanto means:', 'So much'], ['Tranquillo means:', 'Calm'], ['Triste, tristamente means:', 'Sad, sorrowful'], ['Volta means:', 'Time'], ['What is the meaning of the two dots at the end of the stave?', 'Repeat previous section', 'assets/grade3/image5.png'], ['What does the line above the notes mean?', 'The slur', 'assets/grade3/image6.png'], ['What is the meaning of the dots above these notes?', 'Staccato marks', 'assets/grade3/image7.png'], ['What is the name of the line joining these two notes?', 'Tie', 'assets/grade3/image8.png'], ['What does a crotchet = 120 mean?', '120 crochet beats in a minute', 'assets/grade3/image9.png'],
     ['Amoroso means:', 'Loving'], ['Ben marcato means:', 'Well marked'], ['Con anima means:', 'With feeling, with spirit'], ['Con brio means:', 'With vigour'], ['Con forza means:', 'With force'], ['Prestissimo means:', 'Very fast'], ['Sforzando, sforzato, sfz, sf means:', 'Forced, accented']
   ],
   4: [
@@ -60,25 +60,25 @@ const RAW_BANK = {
 // Short score excerpts are shared where the printed marking is the teaching point.
 // Character words remain text-only because they do not have a single notated shape.
 const EXAMPLE_IMAGES = {
-  'andante means:': 'assets/examples/tempo-metronome.png',
-  'crescendo means:': 'assets/examples/hairpins.png',
-  'decrescendo means:': 'assets/examples/hairpins.png',
-  'diminuendo means:': 'assets/examples/hairpins.png',
-  'f (forte) means:': 'assets/examples/dynamic-levels.png',
-  'ff (fortissimo) means:': 'assets/examples/dynamic-levels.png',
-  'mf (mezzo forte) means:': 'assets/examples/dynamic-levels.png',
-  'mp (mezzo piano) means:': 'assets/examples/dynamic-levels.png',
-  'p (piano) means:': 'assets/examples/dynamic-levels.png',
-  'pp (pianissimo) means:': 'assets/examples/dynamic-levels.png',
+  'andante means:': 'assets/grade3/tempo-metronome.png',
+  'crescendo means:': 'assets/grade3/hairpins.png',
+  'decrescendo means:': 'assets/grade3/hairpins.png',
+  'diminuendo means:': 'assets/grade3/hairpins.png',
+  'f (forte) means:': 'assets/grade3/dynamic-levels.png',
+  'ff (fortissimo) means:': 'assets/grade3/dynamic-levels.png',
+  'mf (mezzo forte) means:': 'assets/grade3/dynamic-levels.png',
+  'mp (mezzo piano) means:': 'assets/grade3/dynamic-levels.png',
+  'p (piano) means:': 'assets/grade3/dynamic-levels.png',
+  'pp (pianissimo) means:': 'assets/grade3/dynamic-levels.png',
   'staccato (or stacc.) means:': 'assets/grade1/image6.png',
-  'mm. crotchet = 96 means:': 'assets/examples/tempo-metronome.png',
-  'ottava sign (8va) means:': 'assets/examples/ottava.png',
+  'mm. crotchet = 120 means:': 'assets/grade3/tempo-metronome.png',
+  'ottava sign (8va) means:': 'assets/grade3/ottava.png',
   'tenuto means:': 'assets/grade2/image7.png',
   'accent sign means:': 'assets/grade1/image5.png',
   'mezzo-staccato means:': 'assets/grade2/image5.png',
   'marcato sign means:': 'assets/grade1/image5.png',
   'staccatissimo means:': 'assets/grade2/image6.png',
-  'alla breve means:': 'assets/examples/alla-breve.png',
+  'alla breve means:': 'assets/grade3/alla-breve.png',
   'marcato, marc. means:': 'assets/grade1/image5.png',
 };
 
@@ -95,7 +95,7 @@ const EXPLANATION_OVERRIDES = {
   'what does the line above the notes mean?': 'The curved line is a slur, indicating smooth connection across notes. Unlike a tie, it can join different pitches and does not combine their durations.',
   'what is the meaning of the dots above these notes?': 'The dots are staccato marks, so the notes should be played short and detached. Staccatissimo is even shorter, while legato is smooth and connected.',
   'what is the name of the line joining these two notes?': 'A tie joins notes of the same pitch and combines their written durations. A slur may look similar but joins notes for phrasing, including different pitches.',
-  'what does a crotchet = 96 mean?': 'The crotchet receives the beat, and the tempo is 96 crotchet beats per minute. The number is the metronome speed, not a count of 96 notes in the piece.',
+  'what does a crotchet = 120 mean?': 'The crotchet receives the beat, and the tempo is 120 crotchet beats in a minute. The number is the metronome speed, not a count of 120 notes in the piece.',
   'pause or fermata means:': 'A fermata tells the performer to hold the note or rest longer than its written value. It allows expressive lengthening, unlike tenuto, which normally preserves the written duration.',
   'ottava sign (8va) means:': 'An ottava sign changes the sounding pitch by an octave: higher when written above, lower when written below. It changes register, unlike a tie or slur.',
   'accent sign means:': 'An accent mark means the note should be played strongly or stressed. Marcato is a closely related marking; staccato instead describes a detached length of note.',
@@ -483,7 +483,14 @@ function renderNotation(element, notation, width) {
   const initialWidth = container.clientWidth || container.getBoundingClientRect?.().width || width;
   const draw = (availableWidth) => {
     availableWidth = Math.max(220, Math.floor(availableWidth));
-    const narrowLayout = availableWidth < 480;
+    // Some foldable cover screens report their physical width (1080px) as the
+    // CSS viewport width. Include a portrait aspect-ratio check so those
+    // screens still get one bar per system, while an unfolded wide viewport
+    // keeps the two bars together.
+    const viewportWidth = window.innerWidth || availableWidth;
+    const viewportHeight = window.innerHeight || 0;
+    const portraitViewport = viewportHeight > viewportWidth * 1.35;
+    const narrowLayout = availableWidth < 480 || (portraitViewport && availableWidth < 1100);
     const lineBreaks = notation.barCount > 1
       ? narrowLayout
         ? Array.from({ length: notation.barCount - 1 }, (_, index) => index + 1)
@@ -1561,7 +1568,8 @@ function renderQuestion() {
   answers.classList.toggle('interval-answers', item.category === 'intervals');
   answers.classList.toggle('pitch-answers', item.category === 'pitches');
   answers.classList.toggle('tonic-triad-answers', item.answerType === 'tonic-triad');
-  answers.classList.toggle('time-signature-answers', item.category === 'time-signatures' && !item.answerType);
+  answers.classList.toggle('time-signature-answers', item.category === 'time-signatures' && !item.answerType && item.questionForm !== 'irregular-division');
+  answers.classList.toggle('irregular-division-answers', item.questionForm === 'irregular-division');
   answers.classList.toggle('time-classification-answers', item.answerType === 'time-classification');
   answers.classList.toggle('key-signature-answers', item.answerType === 'key-signature');
   answers.classList.toggle('scale-identification-answers', item.answerType === 'scale-identification');
@@ -1582,14 +1590,22 @@ function renderQuestion() {
     return;
   }
   item.options.forEach((option, index) => {
+    // Keep answer rendering resilient if a generated option is an object from
+    // an older question-bank entry. Never let a missing display field become
+    // the literal word "undefined" in the UI.
+    const rawOptionValue = typeof option === 'string'
+      ? option
+      : option?.name ?? option?.label ?? option?.value ?? '';
+    const optionValue = String(rawOptionValue).replace(/\s+undefined\b/g, '').trim();
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'answer-option';
+    if (item.questionForm === 'irregular-division') button.classList.add('irregular-division-answer-option');
     button.setAttribute('role', 'radio');
     button.setAttribute('aria-checked', 'false');
-    button.dataset.answer = option;
+    button.dataset.answer = optionValue;
     const letter = String.fromCharCode(65 + index);
-    button.setAttribute('aria-label', `Option ${letter}: ${option}`);
+    button.setAttribute('aria-label', `Option ${letter}: ${optionValue}`);
     if (item.category === 'intervals' && item.answerType !== 'interval-identification') {
       button.classList.add('interval-answer-option');
       button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong><div class="answer-notation" role="img"></div>`;
@@ -1601,9 +1617,9 @@ function renderQuestion() {
       button.classList.add('time-signature-answer-option');
       button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong>${timeSignatureMarkMarkup({ label: option })}`;
     } else {
-      button.innerHTML = `<strong>${letter}.</strong> ${option}`;
+      button.innerHTML = `<strong>${letter}.</strong> ${optionValue}`;
     }
-    button.addEventListener('click', () => chooseAnswer(button, option));
+    button.addEventListener('click', () => chooseAnswer(button, optionValue));
     answers.appendChild(button);
   });
   startQuestionTimer();

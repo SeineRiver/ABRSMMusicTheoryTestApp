@@ -33,27 +33,29 @@
             <button class="category-button" type="button" data-category="key-signatures" aria-pressed="false">Key signatures</button>
           </div>
         </div>
-        <div class="grade-selector" role="group" aria-label="Maximum practice grade">
-          <span class="grade-selector-label">Practise through grade</span>
-          <div class="grade-dots" aria-label="Choose the highest grade to include">
-            <span class="grade-dots-line" aria-hidden="true"></span>
-            <button class="grade-dot" type="button" data-grade="1" aria-pressed="false" aria-label="Practise through Grade 1">1</button>
-            <button class="grade-dot" type="button" data-grade="2" aria-pressed="false" aria-label="Practise through Grade 2">2</button>
-            <button class="grade-dot active" type="button" data-grade="3" aria-pressed="true" aria-label="Practise through Grade 3">3</button>
-            <button class="grade-dot" type="button" data-grade="4" aria-pressed="false" aria-label="Practise through Grade 4">4</button>
-            <button class="grade-dot" type="button" data-grade="5" aria-pressed="false" aria-label="Practise through Grade 5">5</button>
+        <div class="practice-controls">
+          <div class="grade-selector" role="group" aria-label="Maximum practice grade">
+            <span class="grade-selector-label">Practise through grade</span>
+            <div class="grade-dots" aria-label="Choose the highest grade to include">
+              <span class="grade-dots-line" aria-hidden="true"></span>
+              <button class="grade-dot" type="button" data-grade="1" aria-pressed="false" aria-label="Practise through Grade 1">1</button>
+              <button class="grade-dot" type="button" data-grade="2" aria-pressed="false" aria-label="Practise through Grade 2">2</button>
+              <button class="grade-dot active" type="button" data-grade="3" aria-pressed="true" aria-label="Practise through Grade 3">3</button>
+              <button class="grade-dot" type="button" data-grade="4" aria-pressed="false" aria-label="Practise through Grade 4">4</button>
+              <button class="grade-dot" type="button" data-grade="5" aria-pressed="false" aria-label="Practise through Grade 5">5</button>
+            </div>
+            <span class="grade-selector-help">About half of each test uses the highest available grade.</span>
           </div>
-          <span class="grade-selector-help">About half of each test uses the highest available grade.</span>
-        </div>
-        <div class="test-options">
-          <label for="test-length">Questions per test
-            <select id="test-length" aria-label="Number of questions">
-              <option value="15" selected>15</option>
-              <option value="10">10</option>
-              <option value="5">5</option>
-            </select>
-          </label>
-          <label class="timer-toggle" for="timer-enabled"><input id="timer-enabled" type="checkbox" /> Timed mode · 20s per question</label>
+          <div class="test-options">
+            <label for="test-length">Questions per test
+              <select id="test-length" aria-label="Number of questions">
+                <option value="15" selected>15</option>
+                <option value="10">10</option>
+                <option value="5">5</option>
+              </select>
+            </label>
+            <label class="timer-toggle" for="timer-enabled"><input id="timer-enabled" type="checkbox" /> Timed mode · 20s per question</label>
+          </div>
         </div>
         <div class="progress-row">
           <span id="progress-label">Question 1 of 15</span>

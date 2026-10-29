@@ -1333,14 +1333,29 @@ function makeChromaticScaleQuestion() {
 }
 
 function sampleQuestions(questions, count) {
-  if (!questions.length) return [];
-  const selected = [];
-  while (selected.length < count) {
-    shuffle(questions).forEach((question) => {
-      if (selected.length < count) selected.push({ ...question });
-    });
-  }
-  return selected;
+  return shuffle(uniqueQuestions(questions)).slice(0, count).map((question) => ({ ...question }));
+}
+
+// Ignore answer choices and runtime metadata when identifying a question. This
+// prevents the same prompt/notation from being selected twice, even when it
+// was generated in different grade pools.
+function questionIdentity(question) {
+  const ignored = new Set(['answer', 'correct', 'explanation', 'grade', 'id', 'options', 'source', 'userAnswer']);
+  const identity = {};
+  Object.keys(question).sort().forEach((key) => {
+    if (!ignored.has(key)) identity[key] = question[key];
+  });
+  return JSON.stringify(identity);
+}
+
+function uniqueQuestions(questions) {
+  const seen = new Set();
+  return questions.filter((question) => {
+    const identity = questionIdentity(question);
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
 }
 
 function selectQuestionsByGrade(candidates, questionCount, maximumGrade) {
@@ -1353,27 +1368,36 @@ function selectBalancedQuestionsByGrade(candidates, questionCount, maximumGrade)
   const focusGrade = eligible.some((question) => question.grade === maximumGrade)
     ? maximumGrade
     : Math.max(...eligible.map((question) => question.grade));
-  const focusPool = eligible.filter((question) => question.grade === focusGrade);
-  const lowerPool = eligible.filter((question) => question.grade < focusGrade);
+  const focusPool = uniqueQuestions(eligible.filter((question) => question.grade === focusGrade));
+  const lowerPool = uniqueQuestions(eligible.filter((question) => question.grade < focusGrade));
   const focusCount = lowerPool.length ? Math.ceil(questionCount / 2) : questionCount;
+  const selectedIdentities = new Set();
   const selectBand = (pool, count) => {
     const selected = [];
     const formCounts = new Map();
-    for (let index = 0; index < count; index += 1) {
-      const availableForms = [...new Set(pool.map((question) => question.questionForm || 'default'))];
+    while (selected.length < count) {
+      const availablePool = pool.filter((question) => !selectedIdentities.has(questionIdentity(question)));
+      if (!availablePool.length) break;
+      const availableForms = [...new Set(availablePool.map((question) => question.questionForm || 'default'))];
       const leastUsed = Math.min(...availableForms.map((form) => formCounts.get(form) || 0));
       const forms = availableForms.filter((form) => (formCounts.get(form) || 0) === leastUsed);
-      const choice = randomFrom(pool.filter((question) => forms.includes(question.questionForm || 'default')));
+      const choice = randomFrom(availablePool.filter((question) => forms.includes(question.questionForm || 'default')));
       selected.push({ ...choice });
+      selectedIdentities.add(questionIdentity(choice));
       const form = choice.questionForm || 'default';
       formCounts.set(form, (formCounts.get(form) || 0) + 1);
     }
     return selected;
   };
-  return shuffle([
+  const selected = [
     ...selectBand(focusPool, focusCount),
-    ...selectBand(lowerPool.length ? lowerPool : focusPool, questionCount - focusCount),
-  ]);
+    ...selectBand(lowerPool, questionCount - focusCount),
+  ];
+  // If one grade band has fewer unique questions than its target, top up from
+  // the other eligible questions without ever reusing a question identity.
+  const remaining = uniqueQuestions(eligible).filter((question) => !selectedIdentities.has(questionIdentity(question)));
+  selected.push(...selectBand(remaining, questionCount - selected.length));
+  return shuffle(selected).slice(0, questionCount);
 }
 
 function runtimeQuestionPool(makeQuestion, count) {

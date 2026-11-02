@@ -1,0 +1,12 @@
+.git/
+.github/
+.codex/
+.agents/
+.wrangler/
+worker/
+work/
+output/
+README.md
+wrangler.toml
+.DS_Store
+*.docx

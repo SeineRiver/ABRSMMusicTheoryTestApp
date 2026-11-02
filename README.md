@@ -2,7 +2,7 @@
 
 A simple, strictly client-side mock-test application primarily covering ABRSM Music Theory Grades 1–5.
 
-Current release: **1.6.1**
+Current release: **2.0.0**
 
 ## How to use
 
@@ -17,7 +17,7 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Interval practice also includes naming harmonic and melodic intervals shown in treble or bass clef, with a studied key signature or written accidentals.
 - Pitch practice asks learners to name notes shown in treble or bass clef with a studied key signature.
 - Tonic-triad practice has builders for using a key signature first or writing accidentals directly on the chord tones.
-- Time-signature and key-signature practice are separate categories, each with 5, 10, or 15 questions.
+- Time-signature and key-signature practice are separate categories, with one shared 5, 10, or 15-question test-length setting.
 - Time-signature practice mixes meter recognition with missing-rest questions; key-signature practice mixes key-signature building with scale identification.
 - Time-signature practice also asks learners to classify metres as simple or compound, and as duple, triple, or quadruple.
 - Some time-signature questions hide two to four rests across two bars and ask the learner to identify each rest’s duration and dotted state.
@@ -36,6 +36,7 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Every generated question carries the earliest applicable syllabus grade in a central curriculum map. This keeps the current mixed-level practice ready for a later Grade 4 or Grade 5 filter.
 - Every question now carries a stable `questionId` and `skillId`, including runtime-generated notation questions, so later synced history can group attempts reliably.
 - Completed and in-progress tests are stored locally as practice sessions and individual attempts. The history includes category, grade, skill, answer, correctness, timing, and a question snapshot; it is ready to sync to a server in a later phase.
+- The main quiz includes **Review mistakes** and **Needs practice** views. Mistakes retain their notation, answers, and explanations; skills are ranked by accuracy and can launch focused practice from saved questions.
 - An optional history-sync client can merge browser history with the signed-in Google account and POST the merged history to a Cloudflare Worker when `window.ABRSM_HISTORY_API_URL` is configured. The client remains offline-first when no API URL is configured.
 - Progress and the current score are shown during the test.
 - After the final question, the result page lists incorrect answers alongside the correct answers.

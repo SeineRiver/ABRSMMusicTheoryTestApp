@@ -2,6 +2,10 @@ name = "music-theory-quiz-api"
 main = "worker/src/index.js"
 compatibility_date = "2026-11-02"
 
+[assets]
+directory = "."
+run_worker_first = ["/api/*"]
+
 [env.local.vars]
 ENVIRONMENT = "development"
 ALLOW_DEV_USER_HEADER = "true"
@@ -25,3 +29,11 @@ binding = "abrsm"
 database_name = "abrsm"
 database_id = "9168edda-e395-42d5-b4d5-e3fbc504b72d"
 migrations_dir = "worker/migrations"
+
+[[env.production.routes]]
+pattern = "abrsm.huynq.me"
+custom_domain = true
+
+[[env.production.routes]]
+pattern = "api.abrsm.huynq.me"
+custom_domain = true

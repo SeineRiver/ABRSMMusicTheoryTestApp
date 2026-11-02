@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 1.6.1';
+const APP_VERSION = 'Version 2.0.0';
 
 const RAW_BANK = {
   1: [
@@ -261,21 +261,21 @@ const PREFERENCES_STORAGE_KEY = 'abrsm-music-theory-quiz-preferences-v1';
 const PRACTICE_HISTORY_STORAGE_KEY = 'abrsm-music-theory-quiz-history-v1';
 const MAX_LOCAL_SESSIONS = 100;
 const MAX_LOCAL_ATTEMPTS = 5000;
-const CATEGORY_DEFAULT_LENGTHS = Object.freeze({ terms: 15, intervals: 10, pitches: 10, 'tonic-triads': 10, 'time-signatures': 10, 'key-signatures': 10 });
+const QUESTION_COUNT_OPTIONS = Object.freeze([5, 10, 15]);
+const DEFAULT_QUESTION_COUNT = 15;
 const authState = { idToken: null, userId: null, email: null, name: null, lastSync: null, googleReady: false };
 
 function loadPreferences() {
   try {
     const value = JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}');
-    const category = Object.hasOwn(CATEGORY_DEFAULT_LENGTHS, value.category) ? value.category : 'terms';
+    const validCategories = ['terms', 'intervals', 'pitches', 'tonic-triads', 'time-signatures', 'key-signatures'];
+    const category = validCategories.includes(value.category) ? value.category : 'terms';
     const grade = Number.isInteger(value.grade) && value.grade >= 1 && value.grade <= 5 ? value.grade : 3;
-    const questionCounts = Object.fromEntries(Object.entries(CATEGORY_DEFAULT_LENGTHS).map(([name, fallback]) => {
-      const count = value.questionCounts?.[name];
-      return [name, [5, 10, 15].includes(count) ? count : fallback];
-    }));
-    return { category, grade, timerEnabled: Boolean(value.timerEnabled), questionCounts };
+    const storedQuestionCount = Number(value.questionCount ?? value.questionCounts?.[category] ?? value.questionCounts?.terms);
+    const questionCount = QUESTION_COUNT_OPTIONS.includes(storedQuestionCount) ? storedQuestionCount : DEFAULT_QUESTION_COUNT;
+    return { category, grade, timerEnabled: Boolean(value.timerEnabled), questionCount };
   } catch (error) {
-    return { category: 'terms', grade: 3, timerEnabled: false, questionCounts: { ...CATEGORY_DEFAULT_LENGTHS } };
+    return { category: 'terms', grade: 3, timerEnabled: false, questionCount: DEFAULT_QUESTION_COUNT };
   }
 }
 
@@ -433,7 +433,7 @@ function serializeHistoryValue(value) {
 
 function questionSnapshotForHistory(question) {
   const snapshot = {};
-  ['questionId', 'skillId', 'category', 'questionForm', 'answerType', 'grade', 'question', 'image', 'notation', 'timeSignaturePrompt', 'triadMode', 'triadFunction', 'options'].forEach((key) => {
+  ['questionId', 'skillId', 'category', 'questionForm', 'answerType', 'grade', 'question', 'image', 'notation', 'timeSignaturePrompt', 'triadMode', 'triadFunction', 'restCount', 'options', 'explanation'].forEach((key) => {
     if (question[key] !== undefined) snapshot[key] = question[key];
   });
   return snapshot;
@@ -524,7 +524,7 @@ window.ABRSM_PRACTICE_HISTORY = {
   },
 };
 
-const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: preferences.category, grade: preferences.grade, timerEnabled: preferences.timerEnabled, questionCounts: preferences.questionCounts, timerId: null, timerDeadline: null, sessionId: null, sessionStartedAt: null, sessionCompleted: false, questionStartedAt: null };
+const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: preferences.category, grade: preferences.grade, timerEnabled: preferences.timerEnabled, questionCount: preferences.questionCount, timerId: null, timerDeadline: null, sessionId: null, sessionStartedAt: null, sessionCompleted: false, questionStartedAt: null };
 
 function savePreferences() {
   try {
@@ -532,7 +532,7 @@ function savePreferences() {
       category: state.category,
       grade: state.grade,
       timerEnabled: state.timerEnabled,
-      questionCounts: state.questionCounts,
+      questionCount: state.questionCount,
     }));
   } catch (error) {
     // The quiz continues normally if browser storage is unavailable.
@@ -1890,6 +1890,61 @@ function setActiveGrade(grade) {
   savePreferences();
 }
 
+let settingsChanged = false;
+let settingsReturnScreen = 'test';
+
+function syncSettingsControls() {
+  const questionCount = $('test-length');
+  const timer = $('timer-enabled');
+  if (questionCount) questionCount.value = String(state.questionCount);
+  if (timer) timer.checked = state.timerEnabled;
+}
+
+function openSettings() {
+  const settings = $('settings-screen');
+  if (!settings) return;
+  settingsReturnScreen = $('result-screen')?.classList.contains('hidden') === false
+    ? 'result'
+    : $('mistakes-screen')?.classList.contains('hidden') === false
+      ? 'mistakes'
+      : $('needs-practice-screen')?.classList.contains('hidden') === false
+        ? 'needs-practice'
+        : 'test';
+  settingsChanged = false;
+  stopQuestionTimer();
+  syncSettingsControls();
+  $('test-screen')?.classList.add('hidden');
+  $('result-screen')?.classList.add('hidden');
+  $('mistakes-screen')?.classList.add('hidden');
+  $('needs-practice-screen')?.classList.add('hidden');
+  settings.classList.remove('hidden');
+  $('settings-button')?.setAttribute('aria-expanded', 'true');
+}
+
+function closeSettings() {
+  const settings = $('settings-screen');
+  if (!settings) return;
+  settings.classList.add('hidden');
+  $('settings-button')?.setAttribute('aria-expanded', 'false');
+  if (settingsChanged) {
+    createTest(state.questionCount, state.category);
+    settingsChanged = false;
+    return;
+  }
+  if (settingsReturnScreen === 'result') {
+    $('result-screen')?.classList.remove('hidden');
+  } else if (settingsReturnScreen === 'mistakes') {
+    $('mistakes-screen')?.classList.remove('hidden');
+    renderMistakesView();
+  } else if (settingsReturnScreen === 'needs-practice') {
+    $('needs-practice-screen')?.classList.remove('hidden');
+    renderNeedsPracticeView();
+  } else {
+    $('test-screen')?.classList.remove('hidden');
+    if (!state.locked) startQuestionTimer();
+  }
+}
+
 function categoryLabel(category) {
   return {
     intervals: 'Intervals',
@@ -1934,10 +1989,10 @@ function startQuestionTimer() {
   state.timerId = window.setInterval(tick, 200);
 }
 
-function createTest(questionCount = state.questionCounts[state.category], category = state.category) {
+function createTest(questionCount = state.questionCount, category = state.category) {
   if (state.sessionId && !state.sessionCompleted) completePracticeSession('abandoned');
   state.category = category;
-  state.questionCounts[category] = questionCount;
+  state.questionCount = questionCount;
   setActiveCategory(category);
   state.test = state.category === 'intervals'
     ? createIntervalsTest(questionCount, state.grade)
@@ -1955,7 +2010,7 @@ function createTest(questionCount = state.questionCounts[state.category], catego
   state.score = 0;
   state.selected = null;
   state.locked = false;
-  $('test-length').value = String(questionCount);
+  syncSettingsControls();
   savePreferences();
   $('result-screen').classList.add('hidden');
   $('test-screen').classList.remove('hidden');
@@ -2114,6 +2169,262 @@ function formatTonicTriadAnswer(answer) {
   try { value = JSON.parse(answer); } catch (error) { return answer; }
   const signature = value.signature === 'none' ? 'No key signature' : formatKeySignatureAnswer(value.signature);
   return `${signature}; notes: ${value.notes.map(formatPitchName).join(', ')}`;
+}
+
+function deserializeHistoryValue(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch (error) { return value; }
+}
+
+function formatHistoryAnswer(item, value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (item?.answerType === 'key-signature') return formatKeySignatureAnswer(typeof value === 'string' ? value : JSON.stringify(value));
+  if (item?.answerType === 'rest-identification') return formatRestAnswers(typeof value === 'string' ? value : JSON.stringify(value));
+  if (item?.answerType === 'tonic-triad') return formatTonicTriadAnswer(typeof value === 'string' ? value : JSON.stringify(value));
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function historySnapshotForAttempt(attempt) {
+  const snapshot = deserializeHistoryValue(attempt?.questionSnapshot);
+  return snapshot && typeof snapshot === 'object' ? snapshot : {};
+}
+
+function questionFromHistoryAttempt(attempt) {
+  const snapshot = historySnapshotForAttempt(attempt);
+  const correct = deserializeHistoryValue(attempt?.correctAnswer);
+  const category = snapshot.category || attempt?.category || 'terms';
+  const question = snapshot.question || `${categoryLabel(category)} question`;
+  const questionForm = snapshot.questionForm || attempt?.questionForm || 'history-review';
+  const item = {
+    ...snapshot,
+    category,
+    questionForm,
+    grade: Number(snapshot.grade ?? attempt?.grade) || undefined,
+    question,
+    correct,
+    answer: correct,
+    userAnswer: null,
+    restCount: snapshot.restCount ?? (Array.isArray(correct) ? correct.length : undefined),
+  };
+  if (!item.explanation) {
+    item.explanation = typeof correct === 'string'
+      ? buildExplanation(question, correct)
+      : `The correct answer is “${formatHistoryAnswer(item, correct)}”.`;
+  }
+  return ensureQuestionMetadata(item);
+}
+
+function historyLabelForItem(item) {
+  return item.grade ? `Grade ${item.grade} · ${categoryLabel(item.category)}` : categoryLabel(item.category);
+}
+
+function appendHistoryVisual(card, item) {
+  if (item.notation) {
+    const notation = document.createElement('div');
+    notation.className = 'review-notation history-notation';
+    notation.setAttribute('role', 'img');
+    card.appendChild(notation);
+    renderNotation(notation, item.notation, 320);
+  } else if (item.image) {
+    const image = document.createElement('img');
+    image.className = 'review-image';
+    image.src = item.image;
+    image.alt = 'Musical notation for the question';
+    card.appendChild(image);
+  }
+}
+
+function appendHistoryParagraph(card, label, value) {
+  const paragraph = document.createElement('p');
+  const strong = document.createElement('strong');
+  strong.textContent = `${label}:`;
+  paragraph.append(strong, document.createTextNode(` ${value || 'No answer'}`));
+  card.appendChild(paragraph);
+}
+
+function renderMistakesView() {
+  const list = $('mistakes-list');
+  if (!list) return;
+  list.replaceChildren();
+  const mistakes = practiceHistory.attempts
+    .filter((attempt) => !attempt.wasCorrect)
+    .sort((left, right) => recordTimestamp(right, ['attemptedAt']) - recordTimestamp(left, ['attemptedAt']))
+    .slice(0, 100);
+  if (!mistakes.length) {
+    const empty = document.createElement('div');
+    empty.className = 'history-empty';
+    empty.innerHTML = '<h3>No mistakes recorded yet.</h3><p>Complete a test and any missed questions will appear here for review.</p>';
+    list.appendChild(empty);
+    return;
+  }
+  mistakes.forEach((attempt) => {
+    const item = questionFromHistoryAttempt(attempt);
+    const card = document.createElement('article');
+    card.className = 'review-item history-card';
+    const heading = document.createElement('h3');
+    heading.textContent = `${historyLabelForItem(item)} · ${item.question}`;
+    card.appendChild(heading);
+    appendHistoryVisual(card, item);
+    appendHistoryParagraph(card, 'Your answer', formatHistoryAnswer(item, deserializeHistoryValue(attempt.selectedAnswer)));
+    appendHistoryParagraph(card, 'Correct answer', formatHistoryAnswer(item, item.correct));
+    const explanation = document.createElement('p');
+    explanation.className = 'review-explanation';
+    const explanationLabel = document.createElement('strong');
+    explanationLabel.textContent = 'Explanation:';
+    explanation.append(explanationLabel, document.createTextNode(` ${item.explanation}`));
+    card.appendChild(explanation);
+    if (attempt.timedOut) {
+      const timedOut = document.createElement('span');
+      timedOut.className = 'history-tag';
+      timedOut.textContent = 'Timed out';
+      card.appendChild(timedOut);
+    }
+    list.appendChild(card);
+  });
+}
+
+function historySkillGroups() {
+  const groups = new Map();
+  practiceHistory.attempts.forEach((attempt) => {
+    const skillId = attempt.skillId || `${attempt.category || 'music-theory'}.${attempt.questionForm || attempt.questionId || 'unknown'}`;
+    const group = groups.get(skillId) || {
+      skillId,
+      attempts: [],
+      total: 0,
+      wrong: 0,
+      correct: 0,
+      latestAttempt: null,
+    };
+    group.attempts.push(attempt);
+    group.total += 1;
+    if (attempt.wasCorrect) group.correct += 1;
+    else group.wrong += 1;
+    if (!group.latestAttempt || recordTimestamp(attempt, ['attemptedAt']) > recordTimestamp(group.latestAttempt, ['attemptedAt'])) group.latestAttempt = attempt;
+    groups.set(skillId, group);
+  });
+  return [...groups.values()]
+    .filter((group) => group.wrong > 0)
+    .sort((left, right) => {
+      const accuracyDifference = (left.correct / left.total) - (right.correct / right.total);
+      if (accuracyDifference !== 0) return accuracyDifference;
+      if (left.wrong !== right.wrong) return right.wrong - left.wrong;
+      return recordTimestamp(right.latestAttempt, ['attemptedAt']) - recordTimestamp(left.latestAttempt, ['attemptedAt']);
+    });
+}
+
+function humanizeQuestionForm(value) {
+  return String(value || 'skill')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function renderNeedsPracticeView() {
+  const list = $('needs-practice-list');
+  if (!list) return;
+  list.replaceChildren();
+  const groups = historySkillGroups();
+  if (!groups.length) {
+    const empty = document.createElement('div');
+    empty.className = 'history-empty';
+    empty.innerHTML = '<h3>You are on track.</h3><p>Once a skill has a missed answer, it will appear here with a focused practice option.</p>';
+    list.appendChild(empty);
+    return;
+  }
+  groups.forEach((group) => {
+    const item = questionFromHistoryAttempt(group.latestAttempt);
+    const card = document.createElement('article');
+    card.className = 'skill-card';
+    const heading = document.createElement('div');
+    heading.className = 'skill-card-heading';
+    const title = document.createElement('h3');
+    title.textContent = item.category === 'terms' ? item.question.replace(/\s+means:\s*$/i, '') : humanizeQuestionForm(item.questionForm);
+    const category = document.createElement('p');
+    category.textContent = `${categoryLabel(item.category)}${item.grade ? ` · up to Grade ${item.grade}` : ''}`;
+    heading.append(title, category);
+    card.appendChild(heading);
+    const metrics = document.createElement('div');
+    metrics.className = 'skill-metrics';
+    const accuracy = Math.round((group.correct / group.total) * 100);
+    metrics.innerHTML = `<span><strong>${accuracy}%</strong> accuracy</span><span><strong>${group.wrong}</strong> missed</span><span><strong>${group.total}</strong> attempted</span>`;
+    card.appendChild(metrics);
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'secondary-button history-action';
+    action.dataset.skillId = group.skillId;
+    action.textContent = 'Practise this skill';
+    card.appendChild(action);
+    list.appendChild(card);
+  });
+}
+
+let historyReturnScreen = 'test';
+
+function openHistoryView(view) {
+  const target = view === 'mistakes' ? $('mistakes-screen') : $('needs-practice-screen');
+  if (!target) return;
+  historyReturnScreen = $('result-screen')?.classList.contains('hidden') === false ? 'result' : $('settings-screen')?.classList.contains('hidden') === false ? 'settings' : 'test';
+  stopQuestionTimer();
+  $('test-screen')?.classList.add('hidden');
+  $('result-screen')?.classList.add('hidden');
+  $('settings-screen')?.classList.add('hidden');
+  $('mistakes-screen')?.classList.add('hidden');
+  $('needs-practice-screen')?.classList.add('hidden');
+  target.classList.remove('hidden');
+  $('settings-button')?.setAttribute('aria-expanded', 'false');
+  if (view === 'mistakes') renderMistakesView();
+  else renderNeedsPracticeView();
+  if (authState.idToken) {
+    void syncPracticeHistory().then(() => {
+      if (!target.classList.contains('hidden')) {
+        if (view === 'mistakes') renderMistakesView();
+        else renderNeedsPracticeView();
+      }
+    });
+  }
+}
+
+function closeHistoryView() {
+  $('mistakes-screen')?.classList.add('hidden');
+  $('needs-practice-screen')?.classList.add('hidden');
+  if (historyReturnScreen === 'result') $('result-screen')?.classList.remove('hidden');
+  else if (historyReturnScreen === 'settings') $('settings-screen')?.classList.remove('hidden');
+  else {
+    $('test-screen')?.classList.remove('hidden');
+    if (!state.locked) startQuestionTimer();
+  }
+}
+
+function createFocusedPractice(skillId) {
+  const attempts = practiceHistory.attempts
+    .filter((attempt) => (attempt.skillId || '') === skillId)
+    .sort((left, right) => recordTimestamp(right, ['attemptedAt']) - recordTimestamp(left, ['attemptedAt']));
+  const latestByQuestion = new Map();
+  attempts.forEach((attempt) => {
+    const questionId = attempt.questionId || attempt.id;
+    if (!latestByQuestion.has(questionId)) latestByQuestion.set(questionId, attempt);
+  });
+  const questions = [...latestByQuestion.values()]
+    .map(questionFromHistoryAttempt)
+    .filter((item) => item.question && (item.options?.length || item.answerType));
+  if (!questions.length) return;
+  if (state.sessionId && !state.sessionCompleted) completePracticeSession('abandoned');
+  state.category = questions[0].category || state.category;
+  state.test = questions;
+  setActiveCategory(state.category);
+  startPracticeSession(questions.length);
+  state.current = 0;
+  state.score = 0;
+  state.selected = null;
+  state.locked = false;
+  $('mistakes-screen')?.classList.add('hidden');
+  $('needs-practice-screen')?.classList.add('hidden');
+  $('result-screen')?.classList.add('hidden');
+  $('settings-screen')?.classList.add('hidden');
+  $('test-screen')?.classList.remove('hidden');
+  renderQuestion();
 }
 
 function renderTonicTriadAnswers(item) {
@@ -2436,27 +2747,44 @@ function renderResults() {
 }
 
 if ($('test-screen')) {
+  $('settings-button')?.addEventListener('click', () => {
+    if ($('settings-screen')?.classList.contains('hidden')) openSettings();
+    else closeSettings();
+  });
+  $('settings-back-button')?.addEventListener('click', closeSettings);
+  $('review-mistakes-button')?.addEventListener('click', () => openHistoryView('mistakes'));
+  $('needs-practice-button')?.addEventListener('click', () => openHistoryView('needs-practice'));
+  $('mistakes-back-button')?.addEventListener('click', closeHistoryView);
+  $('needs-practice-back-button')?.addEventListener('click', closeHistoryView);
+  $('needs-practice-list')?.addEventListener('click', (event) => {
+    const button = event.target.closest('.history-action');
+    if (button?.dataset.skillId) createFocusedPractice(button.dataset.skillId);
+  });
   $('next-button').addEventListener('click', nextQuestion);
   document.querySelectorAll('.category-button').forEach((button) => {
-    button.addEventListener('click', () => createTest(state.questionCounts[button.dataset.category], button.dataset.category));
+    button.addEventListener('click', () => createTest(state.questionCount, button.dataset.category));
   });
   document.querySelectorAll('.grade-dot').forEach((button) => {
     button.addEventListener('click', () => {
+      settingsChanged = true;
       setActiveGrade(Number(button.dataset.grade));
-      createTest(Number($('test-length').value));
     });
   });
-  $('test-length').addEventListener('change', (event) => createTest(Number(event.target.value), state.category));
+  $('test-length').addEventListener('change', (event) => {
+    state.questionCount = QUESTION_COUNT_OPTIONS.includes(Number(event.target.value)) ? Number(event.target.value) : DEFAULT_QUESTION_COUNT;
+    settingsChanged = true;
+    savePreferences();
+  });
   $('timer-enabled').addEventListener('change', (event) => {
     state.timerEnabled = event.target.checked;
+    settingsChanged = true;
     savePreferences();
-    if (!state.locked) startQuestionTimer();
   });
-  $('restart-button').addEventListener('click', () => createTest(state.questionCounts[state.category], state.category));
+  $('restart-button').addEventListener('click', () => createTest(state.questionCount, state.category));
   $('sign-out-button')?.addEventListener('click', signOutGoogle);
-  $('timer-enabled').checked = state.timerEnabled;
+  syncSettingsControls();
   setActiveGrade(state.grade);
-  createTest(state.questionCounts[state.category], state.category);
+  createTest(state.questionCount, state.category);
   renderAuthState();
   void initializeGoogleSignIn();
 }

@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="styles.css" />
     <script src="interval-matrix.js" defer></script>
     <script src="vendor/abcjs-basic-min.js" defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      window.ABRSM_HISTORY_API_URL = 'https://abrsm.huynq.me/api/v1/history/sync';
+    </script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -18,7 +22,15 @@
           <h1>Music Theory Quiz</h1>
           <a class="text-link" href="question-bank.html">Browse the full question bank</a>
         </div>
-        <div class="header-mark" aria-hidden="true">♪</div>
+        <div class="header-tools">
+          <div id="auth-panel" class="auth-panel" aria-label="Account">
+            <span id="auth-status" class="auth-status">Local history only</span>
+            <div id="google-signin" class="google-signin hidden"></div>
+            <button id="sign-out-button" class="secondary-button hidden" type="button">Sign out</button>
+            <p id="auth-message" class="auth-message" role="status"></p>
+          </div>
+          <div class="header-mark" aria-hidden="true">♪</div>
+        </div>
       </header>
 
       <section id="test-screen" class="screen" aria-live="polite">

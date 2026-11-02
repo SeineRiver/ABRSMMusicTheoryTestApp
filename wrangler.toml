@@ -1,0 +1,27 @@
+name = "music-theory-quiz-api"
+main = "worker/src/index.js"
+compatibility_date = "2026-11-02"
+
+[env.local.vars]
+ENVIRONMENT = "development"
+ALLOW_DEV_USER_HEADER = "true"
+ALLOWED_ORIGIN = "http://localhost:8000"
+GOOGLE_CLIENT_ID = "332675007349-ea6ka9lc0ov040la1sohp2mkr98vipiu.apps.googleusercontent.com"
+
+[[env.local.d1_databases]]
+binding = "abrsm"
+database_name = "music-theory-quiz"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "worker/migrations"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+# Set these before deploying. Google OAuth client IDs are public identifiers.
+ALLOWED_ORIGINS = "https://abrsm.huynq.me"
+GOOGLE_CLIENT_ID = "332675007349-ea6ka9lc0ov040la1sohp2mkr98vipiu.apps.googleusercontent.com"
+
+[[env.production.d1_databases]]
+binding = "abrsm"
+database_name = "abrsm"
+database_id = "9168edda-e395-42d5-b4d5-e3fbc504b72d"
+migrations_dir = "worker/migrations"

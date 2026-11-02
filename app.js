@@ -192,11 +192,54 @@ function buildExplanation(question, answer) {
   return `${term} means ${answer.toLowerCase()}. ${TERM_GUIDANCE[term] || getFallbackGuidance(answer)}`;
 }
 
+function slugifyId(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'question';
+}
+
+function hashId(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36).padStart(7, '0');
+}
+
+function stableQuestionSnapshot(question) {
+  const ignored = new Set(['answer', 'correct', 'explanation', 'grade', 'id', 'options', 'questionId', 'skillId', 'source', 'userAnswer']);
+  const snapshot = {};
+  Object.keys(question).sort().forEach((key) => {
+    if (!ignored.has(key)) snapshot[key] = question[key];
+  });
+  return JSON.stringify(snapshot);
+}
+
+function deriveSkillId(question) {
+  const category = slugifyId(question.category || 'music-theory');
+  const skill = question.category === 'terms'
+    ? question.question
+    : question.questionForm || question.question;
+  return `${category}.${slugifyId(skill)}`;
+}
+
+function ensureQuestionMetadata(question) {
+  const skillId = question.skillId || deriveSkillId(question);
+  const questionId = question.questionId || `${slugifyId(question.category || 'question')}-${hashId(stableQuestionSnapshot(question))}`;
+  return { ...question, questionId, skillId };
+}
+
 const BANK = Object.fromEntries(
   Object.entries(RAW_BANK).map(([grade, entries]) => [
     Number(grade),
     entries.map(([question, answer, image], index) => ({
       id: `grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
+      questionId: `terms-grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
+      skillId: `terms.${slugifyId(question)}`,
       grade: Number(grade),
       category: 'terms',
       topic: 'terms-and-signs',
@@ -215,7 +258,11 @@ window.ABRSM_QUESTION_BANK = BANK;
 
 const TIMER_SECONDS = 20;
 const PREFERENCES_STORAGE_KEY = 'abrsm-music-theory-quiz-preferences-v1';
+const PRACTICE_HISTORY_STORAGE_KEY = 'abrsm-music-theory-quiz-history-v1';
+const MAX_LOCAL_SESSIONS = 100;
+const MAX_LOCAL_ATTEMPTS = 5000;
 const CATEGORY_DEFAULT_LENGTHS = Object.freeze({ terms: 15, intervals: 10, pitches: 10, 'tonic-triads': 10, 'time-signatures': 10, 'key-signatures': 10 });
+const authState = { idToken: null, userId: null, email: null, name: null, lastSync: null, googleReady: false };
 
 function loadPreferences() {
   try {
@@ -233,7 +280,251 @@ function loadPreferences() {
 }
 
 const preferences = loadPreferences();
-const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: preferences.category, grade: preferences.grade, timerEnabled: preferences.timerEnabled, questionCounts: preferences.questionCounts, timerId: null, timerDeadline: null };
+function createLocalId(prefix) {
+  const uuid = window.crypto?.randomUUID?.();
+  return `${prefix}-${uuid || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`}`;
+}
+
+function loadPracticeHistory() {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(PRACTICE_HISTORY_STORAGE_KEY) || '{}');
+    return {
+      version: 1,
+      ownerId: typeof value.ownerId === 'string' ? value.ownerId : null,
+      sessions: Array.isArray(value.sessions) ? value.sessions : [],
+      attempts: Array.isArray(value.attempts) ? value.attempts : [],
+    };
+  } catch (error) {
+    return { version: 1, ownerId: null, sessions: [], attempts: [] };
+  }
+}
+
+const practiceHistory = loadPracticeHistory();
+let historySyncTimer = null;
+
+function historyEndpoint(suffix) {
+  const endpoint = window.ABRSM_HISTORY_API_URL;
+  if (!endpoint) return null;
+  try {
+    const url = new URL(endpoint, window.location.href);
+    if (!/\/api\/v1\/history\/sync\/?$/i.test(url.pathname)) return null;
+    url.pathname = url.pathname.replace(/\/history\/sync\/?$/i, suffix);
+    return url.toString();
+  } catch (error) {
+    return null;
+  }
+}
+
+function decodeJwtPayloadForDisplay(token) {
+  try {
+    const segment = token.split('.')[1];
+    const normalized = segment.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(segment.length / 4) * 4, '=');
+    return JSON.parse(window.atob(normalized));
+  } catch (error) {
+    return null;
+  }
+}
+
+function savePracticeHistory() {
+  try {
+    practiceHistory.version = 1;
+    practiceHistory.sessions = practiceHistory.sessions.slice(0, MAX_LOCAL_SESSIONS);
+    practiceHistory.attempts = practiceHistory.attempts.slice(0, MAX_LOCAL_ATTEMPTS);
+    window.localStorage.setItem(PRACTICE_HISTORY_STORAGE_KEY, JSON.stringify(practiceHistory));
+  } catch (error) {
+    // Practice continues normally if browser storage is unavailable or full.
+  }
+}
+
+async function syncPracticeHistory(endpoint = window.ABRSM_HISTORY_API_URL, userId = window.ABRSM_HISTORY_USER_ID) {
+  if (!endpoint || typeof window.fetch !== 'function') return { synced: false, reason: 'not-configured' };
+  const headers = { 'Content-Type': 'application/json' };
+  const token = authState.idToken || window.ABRSM_HISTORY_AUTH_TOKEN;
+  if (token) headers.Authorization = `Bearer ${token}`;
+  else if (userId) headers['X-User-Id'] = userId;
+  else return { synced: false, reason: 'not-authenticated' };
+  try {
+    const response = await window.fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(practiceHistory),
+    });
+    if (!response.ok) return { synced: false, status: response.status };
+    return { synced: true, ...(await response.json()) };
+  } catch (error) {
+    return { synced: false, reason: 'network-error' };
+  }
+}
+
+function schedulePracticeHistorySync() {
+  if (!window.ABRSM_HISTORY_API_URL || (!authState.idToken && !window.ABRSM_HISTORY_USER_ID)) return;
+  if (historySyncTimer !== null) window.clearTimeout(historySyncTimer);
+  historySyncTimer = window.setTimeout(() => {
+    historySyncTimer = null;
+    syncPracticeHistory().catch(() => {});
+  }, 250);
+}
+
+async function fetchRemotePracticeHistory() {
+  const endpoint = historyEndpoint('/history');
+  const token = authState.idToken || window.ABRSM_HISTORY_AUTH_TOKEN;
+  if (!endpoint || !token) return { ok: false, reason: 'not-configured' };
+  try {
+    const response = await window.fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) return { ok: false, status: response.status };
+    const value = await response.json();
+    return {
+      ok: true,
+      sessions: Array.isArray(value.sessions) ? value.sessions : [],
+      attempts: Array.isArray(value.attempts) ? value.attempts : [],
+    };
+  } catch (error) {
+    return { ok: false, reason: 'network-error' };
+  }
+}
+
+function recordTimestamp(record, fields) {
+  for (const field of fields) {
+    const value = record?.[field];
+    if (value) {
+      const timestamp = Date.parse(value);
+      if (!Number.isNaN(timestamp)) return timestamp;
+    }
+  }
+  return 0;
+}
+
+function mergeHistoryRecords(localRecords, remoteRecords, timestampFields) {
+  const merged = new Map(remoteRecords.map((record) => [record.id, record]));
+  localRecords.forEach((record) => {
+    const existing = merged.get(record.id);
+    if (!existing || recordTimestamp(record, timestampFields) >= recordTimestamp(existing, timestampFields)) {
+      merged.set(record.id, record);
+    }
+  });
+  return [...merged.values()];
+}
+
+async function mergeLocalHistoryForUser(userId) {
+  const previousOwner = practiceHistory.ownerId;
+  if (previousOwner && previousOwner !== userId) {
+    // Never merge one signed-in user's cached records into another account.
+    practiceHistory.sessions = [];
+    practiceHistory.attempts = [];
+  }
+  const localSessions = practiceHistory.sessions;
+  const localAttempts = practiceHistory.attempts;
+  const remote = await fetchRemotePracticeHistory();
+  if (remote.ok) {
+    practiceHistory.sessions = mergeHistoryRecords(localSessions, remote.sessions, ['updatedAt', 'completedAt', 'startedAt']);
+    practiceHistory.attempts = mergeHistoryRecords(localAttempts, remote.attempts, ['attemptedAt']);
+  }
+  practiceHistory.ownerId = userId;
+  savePracticeHistory();
+  const synced = await syncPracticeHistory();
+  authState.lastSync = synced.synced ? new Date().toISOString() : null;
+  return { remote, synced };
+}
+
+function serializeHistoryValue(value) {
+  if (value === null || value === undefined) return null;
+  return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
+function questionSnapshotForHistory(question) {
+  const snapshot = {};
+  ['questionId', 'skillId', 'category', 'questionForm', 'answerType', 'grade', 'question', 'image', 'notation', 'timeSignaturePrompt', 'triadMode', 'triadFunction', 'options'].forEach((key) => {
+    if (question[key] !== undefined) snapshot[key] = question[key];
+  });
+  return snapshot;
+}
+
+function upsertPracticeSession(session) {
+  const existingIndex = practiceHistory.sessions.findIndex((candidate) => candidate.id === session.id);
+  if (existingIndex >= 0) practiceHistory.sessions[existingIndex] = { ...practiceHistory.sessions[existingIndex], ...session };
+  else practiceHistory.sessions.unshift(session);
+  savePracticeHistory();
+}
+
+function startPracticeSession(questionCount) {
+  const startedAt = new Date().toISOString();
+  state.sessionId = createLocalId('session');
+  state.sessionStartedAt = startedAt;
+  state.sessionCompleted = false;
+  upsertPracticeSession({
+    id: state.sessionId,
+    status: 'in-progress',
+    category: state.category,
+    maximumGrade: state.grade,
+    requestedQuestionCount: questionCount,
+    questionCount: state.test.length,
+    timedMode: state.timerEnabled,
+    startedAt,
+    completedAt: null,
+    score: 0,
+    attemptCount: 0,
+    correctCount: 0,
+    wrongCount: 0,
+  });
+}
+
+function completePracticeSession(status = 'completed') {
+  if (!state.sessionId || state.sessionCompleted && status === 'completed') return;
+  const attempts = practiceHistory.attempts.filter((attempt) => attempt.sessionId === state.sessionId);
+  const session = practiceHistory.sessions.find((candidate) => candidate.id === state.sessionId);
+  if (!session) return;
+  session.status = status;
+  session.completedAt = new Date().toISOString();
+  session.score = state.score;
+  session.attemptCount = attempts.length;
+  session.correctCount = attempts.filter((attempt) => attempt.wasCorrect).length;
+  session.wrongCount = attempts.filter((attempt) => !attempt.wasCorrect).length;
+  state.sessionCompleted = status === 'completed';
+  savePracticeHistory();
+  schedulePracticeHistorySync();
+}
+
+function recordPracticeAttempt(item, wasCorrect, timedOut) {
+  if (!state.sessionId) return;
+  const attemptedAt = new Date().toISOString();
+  practiceHistory.attempts.unshift({
+    id: createLocalId('attempt'),
+    sessionId: state.sessionId,
+    questionId: item.questionId,
+    skillId: item.skillId,
+    category: item.category,
+    questionForm: item.questionForm,
+    grade: item.grade,
+    wasCorrect,
+    timedOut: Boolean(timedOut),
+    selectedAnswer: serializeHistoryValue(item.userAnswer),
+    correctAnswer: serializeHistoryValue(item.correct),
+    responseTimeMs: state.questionStartedAt ? Math.max(0, Date.now() - state.questionStartedAt) : null,
+    attemptedAt,
+    questionSnapshot: questionSnapshotForHistory(item),
+  });
+  const session = practiceHistory.sessions.find((candidate) => candidate.id === state.sessionId);
+  if (session) {
+    session.attemptCount = (session.attemptCount || 0) + 1;
+    session.correctCount = (session.correctCount || 0) + (wasCorrect ? 1 : 0);
+    session.wrongCount = (session.wrongCount || 0) + (wasCorrect ? 0 : 1);
+    session.score = state.score;
+  }
+  savePracticeHistory();
+}
+
+window.ABRSM_PRACTICE_HISTORY = {
+  get: () => JSON.parse(JSON.stringify(practiceHistory)),
+  sync: (endpoint, userId) => syncPracticeHistory(endpoint, userId),
+  clear: () => {
+    practiceHistory.ownerId = null;
+    practiceHistory.sessions = [];
+    practiceHistory.attempts = [];
+    savePracticeHistory();
+  },
+};
+
+const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: preferences.category, grade: preferences.grade, timerEnabled: preferences.timerEnabled, questionCounts: preferences.questionCounts, timerId: null, timerDeadline: null, sessionId: null, sessionStartedAt: null, sessionCompleted: false, questionStartedAt: null };
 
 function savePreferences() {
   try {
@@ -248,6 +539,139 @@ function savePreferences() {
   }
 }
 const $ = (id) => document.getElementById(id);
+
+function setAuthMessage(message, type = '') {
+  const element = $('auth-message');
+  if (!element) return;
+  element.textContent = message;
+  element.className = `auth-message${type ? ` ${type}` : ''}`;
+}
+
+function renderAuthState() {
+  const status = $('auth-status');
+  const signIn = $('google-signin');
+  const signOut = $('sign-out-button');
+  if (!status || !signIn || !signOut) return;
+  if (authState.idToken) {
+    status.textContent = `Signed in${authState.email ? ` as ${authState.email}` : ''}`;
+    signIn.classList.add('hidden');
+    signOut.classList.remove('hidden');
+  } else {
+    status.textContent = window.ABRSM_HISTORY_API_URL ? 'Sign in to sync your history' : 'Local history only';
+    signIn.classList.toggle('hidden', !authState.googleReady);
+    signOut.classList.add('hidden');
+  }
+}
+
+function waitForGoogleIdentity(timeoutMs = 10000) {
+  return new Promise((resolve) => {
+    const startedAt = Date.now();
+    const check = () => {
+      if (window.google?.accounts?.id) {
+        resolve(true);
+        return;
+      }
+      if (Date.now() - startedAt >= timeoutMs) {
+        resolve(false);
+        return;
+      }
+      window.setTimeout(check, 100);
+    };
+    check();
+  });
+}
+
+async function configuredGoogleClientId() {
+  if (window.ABRSM_GOOGLE_CLIENT_ID) return window.ABRSM_GOOGLE_CLIENT_ID;
+  const endpoint = historyEndpoint('/auth/config');
+  if (!endpoint) return null;
+  try {
+    const response = await window.fetch(endpoint);
+    if (!response.ok) return null;
+    const value = await response.json();
+    return typeof value.googleClientId === 'string' && value.googleClientId ? value.googleClientId : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function handleGoogleCredential(response) {
+  const token = response?.credential;
+  const claims = token ? decodeJwtPayloadForDisplay(token) : null;
+  if (!token || !claims?.sub) {
+    setAuthMessage('Google sign-in did not return a valid identity.', 'error');
+    return;
+  }
+  authState.idToken = token;
+  authState.userId = `google:${claims.sub}`;
+  authState.email = typeof claims.email === 'string' ? claims.email : null;
+  authState.name = typeof claims.name === 'string' ? claims.name : null;
+  window.ABRSM_HISTORY_AUTH_TOKEN = token;
+  renderAuthState();
+  setAuthMessage('Merging local history…');
+  const result = await mergeLocalHistoryForUser(authState.userId);
+  if (result.synced.synced) {
+    setAuthMessage('History merged and synced.', 'success');
+  } else if (result.remote.ok) {
+    setAuthMessage('Signed in; history is saved locally until sync is available.');
+  } else {
+    setAuthMessage('Signed in; local history will sync when the API is configured.');
+  }
+}
+
+function signOutGoogle() {
+  if (window.google?.accounts?.id?.disableAutoSelect) window.google.accounts.id.disableAutoSelect();
+  authState.idToken = null;
+  authState.userId = null;
+  authState.email = null;
+  authState.name = null;
+  authState.lastSync = null;
+  delete window.ABRSM_HISTORY_AUTH_TOKEN;
+  // The remote account remains intact; clear the browser cache to prevent a
+  // later account from inheriting another user's local records.
+  practiceHistory.ownerId = null;
+  practiceHistory.sessions = [];
+  practiceHistory.attempts = [];
+  savePracticeHistory();
+  renderAuthState();
+  setAuthMessage('Signed out. New practice stays local until you sign in again.');
+}
+
+async function initializeGoogleSignIn() {
+  const signIn = $('google-signin');
+  if (!signIn) return;
+  const clientId = await configuredGoogleClientId();
+  if (!clientId) {
+    authState.googleReady = false;
+    signIn.classList.add('hidden');
+    renderAuthState();
+    if (window.ABRSM_HISTORY_API_URL) setAuthMessage('Set GOOGLE_CLIENT_ID in the Worker to enable Google Sign-In.');
+    return;
+  }
+  if (!await waitForGoogleIdentity()) {
+    authState.googleReady = false;
+    signIn.classList.add('hidden');
+    setAuthMessage('Google Sign-In could not be loaded.');
+    return;
+  }
+  window.google.accounts.id.initialize({
+    client_id: clientId,
+    callback: (response) => { void handleGoogleCredential(response); },
+    auto_select: false,
+    cancel_on_tap_outside: true,
+    use_fedcm_for_prompt: true,
+  });
+  signIn.innerHTML = '';
+  window.google.accounts.id.renderButton(signIn, { theme: 'outline', size: 'medium', text: 'signin_with', shape: 'rectangular' });
+  authState.googleReady = true;
+  renderAuthState();
+}
+
+window.ABRSM_AUTH = {
+  signOut: signOutGoogle,
+  getState: () => ({ signedIn: Boolean(authState.idToken), email: authState.email, lastSync: authState.lastSync }),
+};
+
 document.querySelectorAll('[data-app-version]').forEach((element) => { element.textContent = APP_VERSION; });
 const NOTE_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const INTERVAL_DIATONIC_STEPS = { m2: 1, M2: 1, m3: 2, M3: 2, P4: 3, P5: 4, m6: 5, M6: 5, m7: 6, M7: 6, P8: 7 };
@@ -1340,12 +1764,7 @@ function sampleQuestions(questions, count) {
 // prevents the same prompt/notation from being selected twice, even when it
 // was generated in different grade pools.
 function questionIdentity(question) {
-  const ignored = new Set(['answer', 'correct', 'explanation', 'grade', 'id', 'options', 'source', 'userAnswer']);
-  const identity = {};
-  Object.keys(question).sort().forEach((key) => {
-    if (!ignored.has(key)) identity[key] = question[key];
-  });
-  return JSON.stringify(identity);
+  return stableQuestionSnapshot(question);
 }
 
 function uniqueQuestions(questions) {
@@ -1363,7 +1782,7 @@ function selectQuestionsByGrade(candidates, questionCount, maximumGrade) {
 }
 
 function selectBalancedQuestionsByGrade(candidates, questionCount, maximumGrade) {
-  const eligible = candidates.filter((question) => question.grade <= maximumGrade);
+  const eligible = candidates.map(ensureQuestionMetadata).filter((question) => question.grade <= maximumGrade);
   if (!eligible.length) return [];
   const focusGrade = eligible.some((question) => question.grade === maximumGrade)
     ? maximumGrade
@@ -1516,6 +1935,7 @@ function startQuestionTimer() {
 }
 
 function createTest(questionCount = state.questionCounts[state.category], category = state.category) {
+  if (state.sessionId && !state.sessionCompleted) completePracticeSession('abandoned');
   state.category = category;
   state.questionCounts[category] = questionCount;
   setActiveCategory(category);
@@ -1530,6 +1950,7 @@ function createTest(questionCount = state.questionCounts[state.category], catego
       : state.category === 'key-signatures'
         ? createKeySignaturesTest(questionCount, state.grade)
       : createTermsTest(questionCount, state.grade);
+  startPracticeSession(questionCount);
   state.current = 0;
   state.score = 0;
   state.selected = null;
@@ -1544,6 +1965,7 @@ function createTest(questionCount = state.questionCounts[state.category], catego
 function renderQuestion() {
   stopQuestionTimer();
   const item = state.test[state.current];
+  state.questionStartedAt = Date.now();
   const position = state.current + 1;
   $('progress-label').textContent = `Question ${position} of ${state.test.length}`;
   $('score-label').textContent = `${state.score} correct`;
@@ -1940,6 +2362,7 @@ function submitAnswer(timedOut = false) {
   state.locked = true;
   const correct = state.selected === item.correct;
   if (correct) state.score += 1;
+  recordPracticeAttempt(item, correct, timedOut);
   document.querySelectorAll('.answer-option').forEach((option) => {
     option.disabled = true;
     if (option.dataset.answer === item.correct) option.classList.add('correct');
@@ -1983,6 +2406,7 @@ function nextQuestion() {
 
 function renderResults() {
   stopQuestionTimer();
+  completePracticeSession('completed');
   $('test-screen').classList.add('hidden');
   $('result-screen').classList.remove('hidden');
   const wrong = state.test.filter((item) => item.userAnswer !== item.correct);
@@ -2029,7 +2453,10 @@ if ($('test-screen')) {
     if (!state.locked) startQuestionTimer();
   });
   $('restart-button').addEventListener('click', () => createTest(state.questionCounts[state.category], state.category));
+  $('sign-out-button')?.addEventListener('click', signOutGoogle);
   $('timer-enabled').checked = state.timerEnabled;
   setActiveGrade(state.grade);
   createTest(state.questionCounts[state.category], state.category);
+  renderAuthState();
+  void initializeGoogleSignIn();
 }

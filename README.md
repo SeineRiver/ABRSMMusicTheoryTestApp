@@ -34,6 +34,9 @@ Open [`index.html`](./index.html) directly in a web browser.
 - An optional timed mode gives 20 seconds per question; unanswered questions count as incorrect.
 - The selected category, Grade ceiling, per-category question count, and timed-mode setting are saved locally in the browser and restored when the app is reopened.
 - Every generated question carries the earliest applicable syllabus grade in a central curriculum map. This keeps the current mixed-level practice ready for a later Grade 4 or Grade 5 filter.
+- Every question now carries a stable `questionId` and `skillId`, including runtime-generated notation questions, so later synced history can group attempts reliably.
+- Completed and in-progress tests are stored locally as practice sessions and individual attempts. The history includes category, grade, skill, answer, correctness, timing, and a question snapshot; it is ready to sync to a server in a later phase.
+- An optional history-sync client can merge browser history with the signed-in Google account and POST the merged history to a Cloudflare Worker when `window.ABRSM_HISTORY_API_URL` is configured. The client remains offline-first when no API URL is configured.
 - Progress and the current score are shown during the test.
 - After the final question, the result page lists incorrect answers alongside the correct answers.
 - **Do another test** starts a fresh randomized test.
@@ -49,6 +52,77 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Melodic-minor descending scales correctly use the natural-minor form, and tonic endpoints remain the same base note.
 - Musical notation is rendered client-side with the bundled ABCJS runtime; no server or package installation is required.
 - Music notation uses the available container width with controlled ABCJS layout, resize-aware reflow, and mobile overflow handling for narrow phone screens and orientation changes.
+
+## Cloudflare Worker and D1 history API
+
+The repository includes a Worker API in [`worker/src/index.js`](./worker/src/index.js) and one shared D1 schema in [`worker/migrations/0001_history.sql`](./worker/migrations/0001_history.sql). All users share the same D1 database; records are isolated by the verified Google subject (`google:<sub>`). The browser uses Google Identity Services and sends the Google ID token as a Bearer token. The Worker verifies the token signature, issuer, audience, expiry, and verified-email claim against Google’s published signing keys. The local Worker still accepts `X-User-Id` only when the `local` Wrangler environment is used.
+
+### Configure Google Sign-In
+
+Create a Google OAuth **Web application** client in Google Cloud Console. Add every browser origin that will host the quiz (for example, `http://localhost:8000` and your production HTTPS domain) to the client’s authorized JavaScript origins. The client ID is public; do not treat it as a secret.
+
+Set the same client ID and the production frontend origin in the production Wrangler environment:
+
+```toml
+[env.production.vars]
+ENVIRONMENT = "production"
+GOOGLE_CLIENT_ID = "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+ALLOWED_ORIGINS = "https://your-quiz-domain.example"
+```
+
+The static app discovers `GOOGLE_CLIENT_ID` from `/api/v1/auth/config`, renders the Google button, and keeps the ID token in memory only. On sign-in it fetches the account’s remote history, merges it with anonymous local records by stable session/attempt ID, stores the merged result locally, and syncs it back to D1. If a different Google account signs in later, the previous account’s browser cache is cleared before merging so histories cannot cross accounts.
+
+### Test the Worker and D1 locally
+
+Install or run Wrangler, then apply the migration to Wrangler’s local D1 emulator:
+
+```bash
+npx wrangler@latest d1 migrations apply music-theory-quiz --local --env local
+```
+
+Start the Worker in local mode:
+
+```bash
+npx wrangler@latest dev --local --env local
+```
+
+The Worker listens on `http://localhost:8787`. Check it with:
+
+```bash
+curl http://localhost:8787/api/v1/health
+```
+
+Sync a small test history using the development-only user header:
+
+```bash
+curl -X POST http://localhost:8787/api/v1/history/sync \
+  -H 'Content-Type: application/json' \
+  -H 'X-User-Id: local-user-1' \
+  -d '{"sessions":[],"attempts":[]}'
+```
+
+Read that user’s synced history:
+
+```bash
+curl http://localhost:8787/api/v1/history \
+  -H 'X-User-Id: local-user-1'
+```
+
+To exercise the browser sync client locally, set these development-only globals before starting a test:
+
+```js
+window.ABRSM_HISTORY_API_URL = 'http://localhost:8787/api/v1/history/sync';
+window.ABRSM_HISTORY_USER_ID = 'local-user-1';
+```
+
+For Google Sign-In locally, configure `GOOGLE_CLIENT_ID` in `env.local.vars` and use the local Worker URL in `window.ABRSM_HISTORY_API_URL`. The development-only `X-User-Id` path remains available for curl tests; browser Google tokens are verified the same way as production tokens when a client ID is configured.
+
+The local D1 files are managed by Wrangler and should not be committed. Apply the production migration and deploy the named production environment explicitly:
+
+```bash
+npx wrangler@latest d1 migrations apply abrsm --remote --env production --config ./wrangler.toml
+npx wrangler@latest deploy --env production --config ./wrangler.toml
+```
 
 ## Ground truth and question bank
 

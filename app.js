@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 1.6.0';
+const APP_VERSION = 'Version 1.6.1';
 
 const RAW_BANK = {
   1: [

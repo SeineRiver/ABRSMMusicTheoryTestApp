@@ -82,6 +82,87 @@ const EXAMPLE_IMAGES = {
   'marcato, marc. means:': 'assets/grade1/image5.png',
 };
 
+const VISUAL_ANSWER_LABELS = {
+  'these signs above and below the notes are:': 'Accent marks',
+  'the dots above the notes are:': 'Staccato marks',
+  'the sign above the last note means:': 'Fermata',
+  'the sign above these notes means:': 'Tie',
+  'the two dots at the stave end mean:': 'Repeat sign',
+  'dots inside the slur mark mean:': 'Mezzo-staccato',
+  'these wedge shapes above and below the notes mean:': 'Staccatissimo',
+  'the lines above and below these notes mean:': 'Tenuto',
+  'what is the meaning of the two dots at the end of the stave?': 'Repeat sign',
+  'what does the line above the notes mean?': 'Slur',
+  'what is the meaning of the dots above the notes?': 'Staccato marks',
+  'what is the name of the line joining these two notes?': 'Tie',
+  'what does a crotchet = 120 mean?': 'Metronome marking',
+  'the down-bow and up-bow signs show:': 'Down-bow and up-bow signs',
+  'a slur over string notes means:': 'String slur',
+  'this pedal line means:': 'Sustain-pedal line',
+};
+
+const VISUAL_ANSWER_DEFINITIONS = {
+  'these signs above and below the notes are:': 'play the note strongly',
+  'the dots above the notes are:': 'make each note short and detached',
+  'the sign above the last note means:': 'hold the note or rest longer than its written value',
+  'the sign above these notes means:': 'join notes of the same pitch and combine their durations',
+  'the two dots at the stave end mean:': 'repeat the indicated section',
+  'dots inside the slur mark mean:': 'play moderately short and detached',
+  'these wedge shapes above and below the notes mean:': 'play extremely short and detached',
+  'the lines above and below these notes mean:': 'hold the note for its full written value, often with slight pressure',
+  'what is the meaning of the two dots at the end of the stave?': 'repeat the previous section',
+  'what does the line above the notes mean?': 'connect notes smoothly across a phrase',
+  'what is the meaning of the dots above the notes?': 'play the notes short and detached',
+  'what is the name of the line joining these two notes?': 'join notes of the same pitch and combine their written durations',
+  'mm. crotchet = 120 means:': 'the crotchet receives 120 beats per minute',
+  'what does a crotchet = 120 mean?': '120 crotchet beats in a minute',
+};
+
+function normalizedAnswerLabel(value) {
+  return String(value || '').toLowerCase().replace(/\bsign\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function titleCaseAnswerLabel(value) {
+  const label = String(value || '').trim();
+  if (/^f \(forte\)$/i.test(label)) return 'Forte (f)';
+  if (/^ff \(fortissimo\)$/i.test(label)) return 'Fortissimo (ff)';
+  if (/^mf \(mezzo forte\)$/i.test(label)) return 'Mezzo forte (mf)';
+  if (/^mp \(mezzo piano\)$/i.test(label)) return 'Mezzo piano (mp)';
+  if (/^p \(piano\)$/i.test(label)) return 'Piano (p)';
+  if (/^pp \(pianissimo\)$/i.test(label)) return 'Pianissimo (pp)';
+  if (/^staccato \(or stacc\.\)$/i.test(label)) return 'Staccato';
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function visualAnswerLabel(question, answer) {
+  const key = question.trim().toLowerCase();
+  if (VISUAL_ANSWER_LABELS[key]) return VISUAL_ANSWER_LABELS[key];
+  const existingLabel = String(answer).match(/^([^:]+):\s*/)?.[1]?.trim();
+  if (/^(?:the|this)\s/i.test(question) && existingLabel) return existingLabel;
+  const term = question.match(/^(.+?)\s+means:\s*$/i)?.[1];
+  if (term) {
+    if (/^mm\./i.test(term)) return 'Metronome marking';
+    return titleCaseAnswerLabel(term.replace(/\s+sign$/i, ''));
+  }
+  return String(answer).match(/^([^:]+):\s*/)?.[1]?.trim() || String(answer).trim();
+}
+
+function visualAnswerText(question, answer) {
+  const key = question.trim().toLowerCase();
+  const label = visualAnswerLabel(question, answer);
+  let definition = VISUAL_ANSWER_DEFINITIONS[key] || String(answer).trim();
+  const existingPrefix = definition.match(/^([^:]+):\s*(.+)$/);
+  if (existingPrefix) {
+    const prefixLabel = normalizedAnswerLabel(existingPrefix[1]);
+    const targetLabel = normalizedAnswerLabel(label);
+    if (prefixLabel === targetLabel || prefixLabel.startsWith(targetLabel) || targetLabel.startsWith(prefixLabel)) {
+      definition = existingPrefix[2].trim();
+    }
+  }
+  definition = definition.charAt(0).toLowerCase() + definition.slice(1);
+  return `${label}: ${definition}`;
+}
+
 const EXPLANATION_OVERRIDES = {
   'these signs above and below the notes are:': 'An accent mark stresses an individual note. It is a brief emphasis, unlike a crescendo, which gradually increases the volume across a passage.',
   'the dots above the notes are:': 'A staccato dot makes each note short and detached. It contrasts with legato and is less extreme than staccatissimo.',
@@ -236,20 +317,24 @@ function ensureQuestionMetadata(question) {
 const BANK = Object.fromEntries(
   Object.entries(RAW_BANK).map(([grade, entries]) => [
     Number(grade),
-    entries.map(([question, answer, image], index) => ({
-      id: `grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
-      questionId: `terms-grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
-      skillId: `terms.${slugifyId(question)}`,
-      grade: Number(grade),
-      category: 'terms',
-      topic: 'terms-and-signs',
-      question,
-      answer,
-      acceptedAnswers: [answer],
-      explanation: buildExplanation(question, answer),
-      image: image || EXAMPLE_IMAGES[question.toLowerCase()] || null,
-      source: Number(grade) === 4 ? 'Grade 4 Italian and French Terms & Signs PPSX presentations' : Number(grade) === 5 ? 'Maintained Grade 5 terms and signs list' : 'ABRSM Terms & Signs Grades 1–3 PDF'
-    }))
+    entries.map(([question, answer, image], index) => {
+      const imagePath = image || EXAMPLE_IMAGES[question.toLowerCase()] || null;
+      const bankAnswer = imagePath ? visualAnswerText(question, answer) : answer;
+      return {
+        id: `grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
+        questionId: `terms-grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
+        skillId: `terms.${slugifyId(question)}`,
+        grade: Number(grade),
+        category: 'terms',
+        topic: 'terms-and-signs',
+        question,
+        answer: bankAnswer,
+        acceptedAnswers: [bankAnswer],
+        explanation: buildExplanation(question, answer),
+        image: imagePath,
+        source: Number(grade) === 4 ? 'Grade 4 Italian and French Terms & Signs PPSX presentations' : Number(grade) === 5 ? 'Maintained Grade 5 terms and signs list' : 'ABRSM Terms & Signs Grades 1–3 PDF'
+      };
+    })
   ])
 );
 

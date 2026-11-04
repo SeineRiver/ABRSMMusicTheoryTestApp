@@ -73,6 +73,17 @@ ALLOWED_ORIGINS = "https://your-quiz-domain.example"
 
 The static app discovers `GOOGLE_CLIENT_ID` from `/api/v1/auth/config`, renders the Google button, and keeps the ID token in memory only. On sign-in it fetches the account’s remote history, merges it with anonymous local records by stable session/attempt ID, stores the merged result locally, and syncs it back to D1. If a different Google account signs in later, the previous account’s browser cache is cleared before merging so histories cannot cross accounts.
 
+### Automatic production deployment
+
+[`deploy.yml`](./.github/workflows/deploy.yml) deploys the production Worker and static assets whenever a commit reaches the `master` branch. It first applies any pending remote D1 migrations, then runs `wrangler deploy --env production`.
+
+Add these repository secrets in GitHub under **Settings → Secrets and variables → Actions**:
+
+- `CLOUDFLARE_API_TOKEN`: an account API token with the minimum permissions needed to edit Workers and D1 (Workers Scripts Edit and D1 Edit).
+- `CLOUDFLARE_ACCOUNT_ID`: the Cloudflare account ID that owns the Worker and `abrsm` database.
+
+The token is used only by GitHub Actions and is never stored in the repository.
+
 ### Test the Worker and D1 locally
 
 Install or run Wrangler, then apply the migration to Wrangler’s local D1 emulator:

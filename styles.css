@@ -20,6 +20,7 @@ body { margin: 0; min-width: 320px; background: radial-gradient(circle at top ri
 .app-shell { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 24px; min-height: 100vh; display: flex; flex-direction: column; }
 .site-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 38px; gap: 20px; }
 .header-main { display: flex; min-width: 0; align-items: flex-start; gap: 12px; }
+.header-main > svg { display: none !important; width: 0; height: 0; }
 .header-tools { display: flex; align-items: flex-start; gap: 14px; }
 .settings-link { display: grid; flex: 0 0 auto; place-items: center; width: 40px; height: 40px; margin-top: 1px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--muted); cursor: pointer; transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease; }
 .settings-link svg { width: 20px; height: 20px; fill: currentColor; }
@@ -170,7 +171,7 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .rest-duration-button:disabled, .rest-dot-button:disabled { cursor: default; }
 .question-notation-wrap .abcjs-chord { fill: var(--blue-dark); font-weight: 800; }
 .hide-time-signature .abcjs-time-signature, .hide-time-signature .time-signature { visibility: hidden; }
-.feedback { min-height: 24px; margin: 18px 0 8px; color: var(--muted); font-size: 0.92rem; font-weight: 700; }
+.feedback { display: none; min-height: 24px; margin: 18px 0 8px; color: var(--muted); font-size: 0.92rem; font-weight: 700; }
 .feedback.good { color: var(--green); }
 .feedback.bad { color: var(--red); }
 .primary-button { border: 0; border-radius: 13px; background: var(--ink); color: #fff; padding: 15px 20px; font: inherit; font-weight: 800; cursor: pointer; transition: background 160ms ease, transform 160ms ease, opacity 160ms ease; }

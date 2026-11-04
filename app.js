@@ -2031,8 +2031,10 @@ function renderQuestion() {
   $('question-text').textContent = item.question;
   $('feedback').textContent = '';
   $('feedback').className = 'feedback';
+  const requiresSubmitButton = ['key-signature', 'rest-identification', 'tonic-triad'].includes(item.answerType);
+  $('next-button').classList.toggle('hidden', !requiresSubmitButton);
   $('next-button').disabled = true;
-  $('next-button').textContent = 'Choose an answer';
+  $('next-button').textContent = requiresSubmitButton ? 'Complete the answer' : '';
   state.selected = null;
   state.locked = false;
 
@@ -2504,7 +2506,9 @@ function renderTonicTriadAnswers(item) {
       ? JSON.stringify({ signature: item.triadMode === 'key-signature' ? keySignatureValue(signatureAccidental, selectedSignatureNotes) : 'none', notes: selectedNotes })
       : null;
     $('next-button').disabled = !state.selected;
-    $('next-button').textContent = state.selected ? 'Check answer' : item.triadMode === 'key-signature' && !canBuildChord ? 'Build the key signature first' : `Build the ${item.triadFunction || 'tonic'} triad`;
+    $('next-button').textContent = state.selected
+      ? (state.current === state.test.length - 1 ? 'Finish test' : 'Next question')
+      : item.triadMode === 'key-signature' && !canBuildChord ? 'Build the key signature first' : `Build the ${item.triadFunction || 'tonic'} triad`;
   };
 
   if (item.triadMode === 'key-signature') {
@@ -2586,7 +2590,7 @@ function renderKeySignatureAnswers() {
     }
     state.selected = accidental === 'none' || selectedNotes.length > 0 ? keySignatureValue(accidental, selectedNotes) : null;
     $('next-button').disabled = !state.selected;
-    $('next-button').textContent = state.selected ? 'Check answer' : 'Build the key signature';
+    $('next-button').textContent = state.selected ? (state.current === state.test.length - 1 ? 'Finish test' : 'Next question') : 'Build the key signature';
   };
 
   [['sharp', '♯ Sharps'], ['flat', '♭ Flats'], ['none', 'No accidentals']].forEach(([type, label]) => {
@@ -2622,7 +2626,7 @@ function renderRestValueAnswers(item) {
     });
     state.selected = selections.every(Boolean) ? JSON.stringify(selections) : null;
     $('next-button').disabled = !state.selected;
-    $('next-button').textContent = state.selected ? 'Check answer' : 'Complete the rest values';
+    $('next-button').textContent = state.selected ? (state.current === state.test.length - 1 ? 'Finish test' : 'Next question') : 'Complete the rest values';
   };
   for (let index = 0; index < item.restCount; index += 1) {
     const group = document.createElement('section');
@@ -2657,12 +2661,7 @@ function renderRestValueAnswers(item) {
 function chooseAnswer(button, answer) {
   if (state.locked) return;
   state.selected = answer;
-  document.querySelectorAll('.answer-option').forEach((option) => {
-    option.classList.toggle('selected', option === button);
-    option.setAttribute('aria-checked', option === button ? 'true' : 'false');
-  });
-  $('next-button').disabled = false;
-  $('next-button').textContent = 'Check answer';
+  submitAnswer();
 }
 
 function submitAnswer(timedOut = false) {
@@ -2674,45 +2673,16 @@ function submitAnswer(timedOut = false) {
   const correct = state.selected === item.correct;
   if (correct) state.score += 1;
   recordPracticeAttempt(item, correct, timedOut);
-  document.querySelectorAll('.answer-option').forEach((option) => {
-    option.disabled = true;
-    if (option.dataset.answer === item.correct) option.classList.add('correct');
-    else if (option.dataset.answer === item.userAnswer) option.classList.add('incorrect');
-  });
-  if (item.answerType === 'key-signature') {
-    document.querySelectorAll('.key-signature-builder button').forEach((button) => { button.disabled = true; });
-    document.querySelector('.key-signature-builder').classList.add(correct ? 'correct' : 'incorrect');
+  if (state.current === state.test.length - 1) {
+    renderResults();
+    return;
   }
-  if (item.answerType === 'rest-identification') {
-    document.querySelectorAll('.rest-value-builder button').forEach((button) => { button.disabled = true; });
-    document.querySelector('.rest-value-builder').classList.add(correct ? 'correct' : 'incorrect');
-  }
-  if (item.answerType === 'tonic-triad') {
-    document.querySelectorAll('.tonic-triad-builder button').forEach((button) => { button.disabled = true; });
-    document.querySelector('.tonic-triad-builder').classList.add(correct ? 'correct' : 'incorrect');
-  }
-  const formattedCorrect = item.answerType === 'key-signature'
-    ? formatKeySignatureAnswer(item.correct)
-    : item.answerType === 'rest-identification'
-      ? formatRestAnswers(item.correct)
-      : item.answerType === 'tonic-triad'
-        ? formatTonicTriadAnswer(item.correct)
-      : item.correct;
-  $('feedback').textContent = correct
-    ? 'Correct — well done.'
-    : timedOut
-      ? `Time’s up. The correct answer is “${formattedCorrect}”.`
-      : `Not quite. The correct answer is “${formattedCorrect}”.`;
-  $('feedback').className = `feedback ${correct ? 'good' : 'bad'}`;
-  $('score-label').textContent = `${state.score} correct`;
-  $('next-button').textContent = state.current === state.test.length - 1 ? 'See results' : 'Next question';
+  state.current += 1;
+  renderQuestion();
 }
 
 function nextQuestion() {
-  if (!state.locked) { submitAnswer(); return; }
-  if (state.current === state.test.length - 1) { renderResults(); return; }
-  state.current += 1;
-  renderQuestion();
+  submitAnswer();
 }
 
 function renderResults() {

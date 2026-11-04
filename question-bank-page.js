@@ -34,12 +34,13 @@ function renderGrade(grade) {
     const card = document.createElement('article');
     card.className = 'bank-item';
     const title = document.createElement('h3');
-    title.textContent = `${index + 1}. ${item.question}`;
+    const prompt = item.image ? 'This sign means:' : item.question;
+    title.textContent = `${index + 1}. ${prompt}`;
     card.appendChild(title);
     if (item.image) {
       const image = document.createElement('img');
       image.src = item.image;
-      image.alt = `Musical notation for: ${item.question}`;
+      image.alt = `Musical notation for: ${prompt}`;
       card.appendChild(image);
     }
     const answer = document.createElement('p');

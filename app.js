@@ -5,7 +5,7 @@ const APP_VERSION = 'Version 2.1.0';
 const RAW_BANK = {
   1: [
     ['Accelerando means:', 'Gradually getting quicker'], ['Adagio means:', 'Slow'], ['Allegretto means:', 'Fairly quick—but not as quick as allegro'], ['Allegro means:', 'Quick'], ['Andante means:', 'At a walking pace'], ['Cantabile means:', 'In a singing style'], ['Crescendo means:', 'Gradually getting louder'], ['Da capo means:', 'Repeat from the beginning'], ['Dal segno means:', 'Repeat from the sign'], ['Decrescendo means:', 'Gradually getting quieter'], ['Diminuendo means:', 'Gradually getting quieter'], ['Fine means:', 'The end'], ['f (forte) means:', 'Loud'], ['ff (fortissimo) means:', 'Very loud'], ['Legato means:', 'Smoothly'], ['Lento means:', 'Slow'], ['Mezzo means:', 'Half'], ['Maestoso means:', 'Majestic'], ['mf (mezzo forte) means:', 'Moderately loud'], ['mp (mezzo piano) means:', 'Moderately quiet'], ['Moderato means:', 'Moderately'], ['p (piano) means:', 'Quiet'], ['pp (pianissimo) means:', 'Very quiet'], ['Poco means:', 'A little'], ['Rallentando (or rall.) means:', 'Gradually getting slower'], ['Ritardando (or rit.) means:', 'Gradually getting slower'], ['Ritenuto (or rit.) means:', 'Held back'], ['Staccato (or stacc.) means:', 'Detached'], ['Tempo means:', 'Speed/time'], ['These signs above and below the notes are:', 'Accents', 'assets/grade1/image5.png'], ['The dots above the notes are:', 'Staccato marks', 'assets/grade1/image6.png'], ['The sign above the last note means:', 'A pause', 'assets/grade1/image7.png'], ['The sign above these notes means:', 'Tie', 'assets/grade1/image8.png'], ['The two dots at the stave end mean:', 'Repeat last section', 'assets/grade1/image9.png'],
-    ['A tempo means:', "Return to the former speed ('in time')"], ['Al fine means:', 'Until the end'], ['Allegro moderato means:', 'Moderately quick'], ['Da capo al fine (D.C. al fine) means:', "From the beginning until 'fine'"], ['MM. crotchet = 120 means:', "Maelzel's metronome, 120 beats per minute"], ['Pause or fermata means:', 'Hold for longer than written'], ['Ottava sign (8va) means:', 'Play one octave higher or lower than written'], ['Poco a poco means:', 'Little by little']
+    ['A tempo means:', "Return to the former speed ('in time')"], ['Al fine means:', 'Until the end'], ['Allegro moderato means:', 'Moderately quick'], ['Da capo al fine (D.C. al fine) means:', 'Repeat from the beginning and stop at the marked ending'], ['MM. crotchet = 120 means:', "Maelzel's metronome, 120 beats per minute"], ['Pause or fermata means:', 'Hold for longer than written'], ['Ottava sign (8va) means:', 'Play one octave higher or lower than written'], ['Poco a poco means:', 'Little by little']
   ],
   2: [
     ['a means:', 'In the style of'], ['a, alla means:', 'In the manner of'], ['Allargando means:', 'Broadening'], ['Andantino means:', 'Slightly faster than andante'], ['Assai means:', 'Very'], ['Con, col means:', 'With'], ['Dolce means:', 'Sweet'], ['e, ed means:', 'And'], ['Espressivo means:', 'Expressive'], ['fp (forte-piano) means:', 'Loud then immediately quiet'], ['Giocoso means:', 'Playful'], ['Grave means:', 'Very slow, solemn'], ['Grazioso means:', 'Graceful'], ['Larghetto means:', 'Rather slow (but not as slow as largo)'], ['Largo means:', 'Slow'], ['Ma means:', 'But'], ['Maestoso means:', 'Majestic'], ['Meno means:', 'Less'], ['Molto means:', 'Much'], ['Mosso, moto means:', 'Movement'], ['Non means:', 'Not'], ['Piu means:', 'More'], ['Presto means:', 'Fast'], ['Senza means:', 'Without'], ['sf, sfz (sforzando) means:', 'Forced, accented'], ['Simile (or sim.) means:', 'In the same way'], ['Sostenuto means:', 'Sustained'], ['Tenuto means:', 'Held'], ['Troppo means:', 'Too much'], ['Vivace, vivo means:', 'Lively, quick'], ['Dots inside the slur mark mean:', 'Semi-staccato', 'assets/grade2/image5.png'], ['These wedge shapes above and below the notes mean:', 'Staccatissimo (super-staccato)', 'assets/grade2/image6.png'], ['The lines above and below these notes mean:', 'Tenuto (held with slight pressure)', 'assets/grade2/image7.png'],
@@ -61,9 +61,9 @@ const RAW_BANK = {
 // Character words remain text-only because they do not have a single notated shape.
 const EXAMPLE_IMAGES = {
   'andante means:': 'assets/grade3/tempo-metronome.png',
-  'crescendo means:': 'assets/grade3/hairpins.png',
-  'decrescendo means:': 'assets/grade3/hairpins.png',
-  'diminuendo means:': 'assets/grade3/hairpins.png',
+  'crescendo means:': 'assets/grade3/crescendo-hairpin.png',
+  'decrescendo means:': 'assets/grade3/decrescendo-diminuendo.png',
+  'diminuendo means:': 'assets/grade3/decrescendo-diminuendo.png',
   'f (forte) means:': 'assets/grade3/dynamic-levels.png',
   'ff (fortissimo) means:': 'assets/grade3/dynamic-levels.png',
   'mf (mezzo forte) means:': 'assets/grade3/dynamic-levels.png',
@@ -71,7 +71,7 @@ const EXAMPLE_IMAGES = {
   'p (piano) means:': 'assets/grade3/dynamic-levels.png',
   'pp (pianissimo) means:': 'assets/grade3/dynamic-levels.png',
   'staccato (or stacc.) means:': 'assets/grade1/image6.png',
-  'mm. crotchet = 120 means:': 'assets/grade3/tempo-metronome.png',
+  'mm. crotchet = 120 means:': 'assets/grade1/metronome-crotchet-120.png',
   'ottava sign (8va) means:': 'assets/grade3/ottava.png',
   'tenuto means:': 'assets/grade2/image7.png',
   'accent sign means:': 'assets/grade1/image5.png',
@@ -829,7 +829,11 @@ function shuffle(list) {
 function makeQuestion(grade, entry) {
   const { answer: correct } = entry;
   const distractors = shuffle([...new Set(BANK[grade].map((item) => item.answer).filter((answer) => answer !== correct))]).slice(0, 3);
-  return { ...entry, questionForm: entry.image ? 'notation-sign' : 'term-definition', correct, options: shuffle([correct, ...distractors]), userAnswer: null };
+  // When a score/example image is shown, identify the visual rather than
+  // repeating its name in the prompt. Text-only entries still name the term,
+  // because the definition is what the learner is being asked to recall.
+  const question = entry.image ? 'This sign means:' : entry.question;
+  return { ...entry, questionKey: entry.question, question, questionForm: entry.image ? 'notation-sign' : 'term-definition', correct, options: shuffle([correct, ...distractors]), userAnswer: null };
 }
 
 function randomFrom(list) {

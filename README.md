@@ -2,7 +2,7 @@
 
 A simple, strictly client-side mock-test application primarily covering ABRSM Music Theory Grades 1–5.
 
-Current release: **2.0.0**
+Current release: **2.1.0**
 
 ## How to use
 

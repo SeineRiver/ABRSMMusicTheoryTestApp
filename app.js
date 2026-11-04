@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 2.0.0';
+const APP_VERSION = 'Version 2.1.0';
 
 const RAW_BANK = {
   1: [
@@ -2664,6 +2664,21 @@ function chooseAnswer(button, answer) {
   submitAnswer();
 }
 
+function flashAnswerResult(correct, onComplete) {
+  const card = document.querySelector('.question-card');
+  if (!card) {
+    onComplete();
+    return;
+  }
+  const className = correct ? 'answer-flash-correct' : 'answer-flash-incorrect';
+  card.classList.remove('answer-flash-correct', 'answer-flash-incorrect');
+  card.classList.add(className);
+  window.setTimeout(() => {
+    card.classList.remove(className);
+    onComplete();
+  }, 180);
+}
+
 function submitAnswer(timedOut = false) {
   if (state.locked) return;
   stopQuestionTimer();
@@ -2673,12 +2688,14 @@ function submitAnswer(timedOut = false) {
   const correct = state.selected === item.correct;
   if (correct) state.score += 1;
   recordPracticeAttempt(item, correct, timedOut);
-  if (state.current === state.test.length - 1) {
-    renderResults();
-    return;
-  }
-  state.current += 1;
-  renderQuestion();
+  flashAnswerResult(correct, () => {
+    if (state.current === state.test.length - 1) {
+      renderResults();
+      return;
+    }
+    state.current += 1;
+    renderQuestion();
+  });
 }
 
 function nextQuestion() {

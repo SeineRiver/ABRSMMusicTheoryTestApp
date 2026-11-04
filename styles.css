@@ -72,6 +72,24 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .settings-card .grade-dots { width: min(100%, 420px); }
 .settings-card .test-options { align-items: flex-start; justify-content: flex-start; padding-top: 18px; border-top: 1px solid var(--line); }
 .settings-note { margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+.practice-mode-setting { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+.practice-mode-copy { display: grid; gap: 4px; }
+.practice-mode-copy strong { color: var(--ink); font-size: 0.94rem; }
+.practice-mode-copy span { color: var(--muted); font-size: 0.86rem; line-height: 1.4; }
+.setting-switch { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 9px; border: 0; background: transparent; color: var(--muted); padding: 4px 0 4px 8px; font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; }
+.setting-switch-track { display: inline-flex; align-items: center; width: 42px; height: 24px; padding: 3px; border-radius: 999px; background: #a0a9b8; transition: background 160ms ease; }
+.setting-switch-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #0002; transition: transform 160ms ease; }
+.setting-switch.active { color: var(--blue-dark); }
+.setting-switch.active .setting-switch-track { background: var(--blue); }
+.setting-switch.active .setting-switch-thumb { transform: translateX(18px); }
+.setting-switch:focus-visible { outline: 3px solid #55a3da66; outline-offset: 3px; border-radius: 6px; }
+.practice-explanation { margin-top: 16px; padding: clamp(20px, 4vw, 28px); border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: 0 18px 50px #1d35570f; }
+.practice-explanation h2 { margin: 0 0 12px; font-size: 1.35rem; }
+.practice-result-good { color: var(--green); }
+.practice-result-bad { color: var(--red); }
+.practice-explanation p { margin-bottom: 10px; line-height: 1.55; }
+.practice-explanation-copy { margin-bottom: 0; }
+.practice-explanation .primary-button { margin-top: 18px; }
 .history-toolbar { margin-bottom: 20px; }
 .history-heading { margin-bottom: 24px; }
 .history-heading h2 { margin: 0 0 8px; font-size: clamp(2rem, 6vw, 3rem); letter-spacing: -0.05em; }

@@ -34,7 +34,7 @@ function renderGrade(grade) {
     const card = document.createElement('article');
     card.className = 'bank-item';
     const title = document.createElement('h3');
-    const prompt = item.image ? 'This sign means:' : item.question;
+    const prompt = item.displayQuestion || item.question;
     title.textContent = `${index + 1}. ${prompt}`;
     card.appendChild(title);
     if (item.image) {

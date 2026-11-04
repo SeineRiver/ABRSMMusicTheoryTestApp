@@ -1,6 +1,6 @@
 // Rebuilt from the PDF: the three PPSX banks plus additional entries from the
 // attached official ABRSM terms-and-signs PDF/DOCX. Each entry is [question, answer, optional image].
-const APP_VERSION = 'Version 2.1.0';
+const APP_VERSION = 'Version 2.2.0';
 
 const RAW_BANK = {
   1: [
@@ -117,6 +117,21 @@ const VISUAL_ANSWER_DEFINITIONS = {
   'mm. crotchet = 120 means:': 'the crotchet receives 120 beats per minute',
   'what does a crotchet = 120 mean?': '120 crotchet beats in a minute',
 };
+
+const VISUAL_QUESTION_PROMPTS = {
+  'f (forte) means:': 'This sign (f) means:',
+  'ff (fortissimo) means:': 'This sign (ff) means:',
+  'mf (mezzo forte) means:': 'This sign (mf) means:',
+  'mp (mezzo piano) means:': 'This sign (mp) means:',
+  'p (piano) means:': 'This sign (p) means:',
+  'pp (pianissimo) means:': 'This sign (pp) means:',
+  'mm. crotchet = 120 means:': 'This sign (mm. crotchet = 120) means:',
+  'ottava sign (8va) means:': 'This sign (8va) means:',
+};
+
+function visualQuestionPrompt(question) {
+  return VISUAL_QUESTION_PROMPTS[question.trim().toLowerCase()] || 'This sign means:';
+}
 
 function normalizedAnswerLabel(value) {
   return String(value || '').toLowerCase().replace(/\bsign\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -320,6 +335,7 @@ const BANK = Object.fromEntries(
     entries.map(([question, answer, image], index) => {
       const imagePath = image || EXAMPLE_IMAGES[question.toLowerCase()] || null;
       const bankAnswer = imagePath ? visualAnswerText(question, answer) : answer;
+      const displayQuestion = imagePath ? visualQuestionPrompt(question) : question;
       return {
         id: `grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
         questionId: `terms-grade-${grade}-question-${String(index + 1).padStart(3, '0')}`,
@@ -328,6 +344,7 @@ const BANK = Object.fromEntries(
         category: 'terms',
         topic: 'terms-and-signs',
         question,
+        displayQuestion,
         answer: bankAnswer,
         acceptedAnswers: [bankAnswer],
         explanation: buildExplanation(question, answer),
@@ -358,9 +375,9 @@ function loadPreferences() {
     const grade = Number.isInteger(value.grade) && value.grade >= 1 && value.grade <= 5 ? value.grade : 3;
     const storedQuestionCount = Number(value.questionCount ?? value.questionCounts?.[category] ?? value.questionCounts?.terms);
     const questionCount = QUESTION_COUNT_OPTIONS.includes(storedQuestionCount) ? storedQuestionCount : DEFAULT_QUESTION_COUNT;
-    return { category, grade, timerEnabled: Boolean(value.timerEnabled), questionCount };
+    return { category, grade, timerEnabled: Boolean(value.timerEnabled), practiceMode: Boolean(value.practiceMode), questionCount };
   } catch (error) {
-    return { category: 'terms', grade: 3, timerEnabled: false, questionCount: DEFAULT_QUESTION_COUNT };
+    return { category: 'terms', grade: 3, timerEnabled: false, practiceMode: false, questionCount: DEFAULT_QUESTION_COUNT };
   }
 }
 
@@ -609,7 +626,7 @@ window.ABRSM_PRACTICE_HISTORY = {
   },
 };
 
-const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: preferences.category, grade: preferences.grade, timerEnabled: preferences.timerEnabled, questionCount: preferences.questionCount, timerId: null, timerDeadline: null, sessionId: null, sessionStartedAt: null, sessionCompleted: false, questionStartedAt: null };
+const state = { test: [], current: 0, score: 0, selected: null, locked: false, category: preferences.category, grade: preferences.grade, timerEnabled: preferences.timerEnabled, practiceMode: preferences.practiceMode, questionCount: preferences.questionCount, timerId: null, timerDeadline: null, sessionId: null, sessionStartedAt: null, sessionCompleted: false, questionStartedAt: null };
 
 function savePreferences() {
   try {
@@ -617,6 +634,7 @@ function savePreferences() {
       category: state.category,
       grade: state.grade,
       timerEnabled: state.timerEnabled,
+      practiceMode: state.practiceMode,
       questionCount: state.questionCount,
     }));
   } catch (error) {
@@ -914,10 +932,10 @@ function shuffle(list) {
 function makeQuestion(grade, entry) {
   const { answer: correct } = entry;
   const distractors = shuffle([...new Set(BANK[grade].map((item) => item.answer).filter((answer) => answer !== correct))]).slice(0, 3);
-  // When a score/example image is shown, identify the visual rather than
-  // repeating its name in the prompt. Text-only entries still name the term,
-  // because the definition is what the learner is being asked to recall.
-  const question = entry.image ? 'This sign means:' : entry.question;
+  // Illustrated entries use a visual-focused prompt; shared notation may add
+  // the specific marking so the learner can tell which symbol is being asked.
+  // Text-only entries name the term because the definition is being recalled.
+  const question = entry.displayQuestion || entry.question;
   return { ...entry, questionKey: entry.question, question, questionForm: entry.image ? 'notation-sign' : 'term-definition', correct, options: shuffle([correct, ...distractors]), userAnswer: null };
 }
 
@@ -1985,8 +2003,14 @@ let settingsReturnScreen = 'test';
 function syncSettingsControls() {
   const questionCount = $('test-length');
   const timer = $('timer-enabled');
+  const practiceMode = $('practice-mode-toggle');
   if (questionCount) questionCount.value = String(state.questionCount);
   if (timer) timer.checked = state.timerEnabled;
+  if (practiceMode) {
+    practiceMode.setAttribute('aria-checked', String(state.practiceMode));
+    practiceMode.classList.toggle('active', state.practiceMode);
+    practiceMode.querySelector('.setting-switch-state').textContent = state.practiceMode ? 'On' : 'Off';
+  }
 }
 
 function openSettings() {
@@ -2120,6 +2144,11 @@ function renderQuestion() {
   $('question-text').textContent = item.question;
   $('feedback').textContent = '';
   $('feedback').className = 'feedback';
+  $('practice-explanation').classList.add('hidden');
+  $('practice-result-title').textContent = '';
+  $('practice-result-title').className = '';
+  $('practice-correct-answer').textContent = '';
+  $('practice-explanation-text').textContent = '';
   const requiresSubmitButton = ['key-signature', 'rest-identification', 'tonic-triad'].includes(item.answerType);
   $('next-button').classList.toggle('hidden', !requiresSubmitButton);
   $('next-button').disabled = true;
@@ -2768,6 +2797,39 @@ function flashAnswerResult(correct, onComplete) {
   }, 180);
 }
 
+function showPracticeExplanation(item, correct, timedOut) {
+  $('score-label').textContent = `${state.score} correct`;
+  const title = $('practice-result-title');
+  title.textContent = timedOut ? "Time's up" : correct ? 'Correct!' : 'Not quite';
+  title.className = correct ? 'practice-result-good' : 'practice-result-bad';
+  $('practice-correct-answer').textContent = formatHistoryAnswer(item, item.correct);
+  $('practice-explanation-text').textContent = item.explanation || '';
+  $('practice-next-button').textContent = state.current === state.test.length - 1 ? 'See results' : 'Next question';
+  const explanationPanel = $('practice-explanation');
+  explanationPanel.classList.remove('hidden');
+  $('next-button').classList.add('hidden');
+  $('next-button').disabled = true;
+  $('answers').querySelectorAll('button').forEach((button) => {
+    button.disabled = true;
+    if (button.classList.contains('answer-option')) {
+      const isCorrect = button.dataset.answer === String(item.correct);
+      button.classList.toggle('correct', isCorrect);
+      button.classList.toggle('incorrect', !timedOut && button.dataset.answer === String(state.selected) && !correct);
+    }
+  });
+  explanationPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $('practice-next-button').focus({ preventScroll: true });
+}
+
+function advanceQuestion() {
+  if (state.current === state.test.length - 1) {
+    renderResults();
+    return;
+  }
+  state.current += 1;
+  renderQuestion();
+}
+
 function submitAnswer(timedOut = false) {
   if (state.locked) return;
   stopQuestionTimer();
@@ -2777,18 +2839,22 @@ function submitAnswer(timedOut = false) {
   const correct = state.selected === item.correct;
   if (correct) state.score += 1;
   recordPracticeAttempt(item, correct, timedOut);
+  if (state.practiceMode) {
+    showPracticeExplanation(item, correct, timedOut);
+    return;
+  }
   flashAnswerResult(correct, () => {
-    if (state.current === state.test.length - 1) {
-      renderResults();
-      return;
-    }
-    state.current += 1;
-    renderQuestion();
+    advanceQuestion();
   });
 }
 
 function nextQuestion() {
   submitAnswer();
+}
+
+function continueAfterExplanation() {
+  if (!state.locked) return;
+  advanceQuestion();
 }
 
 function renderResults() {
@@ -2837,6 +2903,7 @@ if ($('test-screen')) {
     if (button?.dataset.skillId) createFocusedPractice(button.dataset.skillId);
   });
   $('next-button').addEventListener('click', nextQuestion);
+  $('practice-next-button').addEventListener('click', continueAfterExplanation);
   document.querySelectorAll('.category-button').forEach((button) => {
     button.addEventListener('click', () => createTest(state.questionCount, button.dataset.category));
   });
@@ -2854,6 +2921,12 @@ if ($('test-screen')) {
   $('timer-enabled').addEventListener('change', (event) => {
     state.timerEnabled = event.target.checked;
     settingsChanged = true;
+    savePreferences();
+  });
+  $('practice-mode-toggle').addEventListener('click', () => {
+    state.practiceMode = !state.practiceMode;
+    settingsChanged = true;
+    syncSettingsControls();
     savePreferences();
   });
   $('restart-button').addEventListener('click', () => createTest(state.questionCount, state.category));

@@ -2,7 +2,7 @@
 
 A simple, strictly client-side mock-test application primarily covering ABRSM Music Theory Grades 1–5.
 
-Current release: **2.1.0**
+Current release: **2.2.0**
 
 ## How to use
 
@@ -23,6 +23,7 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Some time-signature questions hide two to four rests across two bars and ask the learner to identify each rest’s duration and dotted state.
 - Choice-based questions have four answer choices: one correct answer and three distractors.
 - Questions are answered one at a time.
+- Optional Practice mode pauses after each answer to show the correct answer and explanation before the learner continues; timed-out questions also show their explanation.
 - The five-dot grade selector sets the highest grade in a test. About half the questions use that highest available grade and the rest are drawn from lower grades.
 - Every category uses the same sampler: it balances available question forms within each grade band while keeping about half the test at the selected highest grade.
 - Grade 4 Terms & Signs includes Italian and French directions, string techniques, piano pedal signs, and illustrated ornament recognition.
@@ -32,7 +33,7 @@ Open [`index.html`](./index.html) directly in a web browser.
 - Grade 5 interval practice includes compound intervals; triad practice adds supertonic triads, inversion recognition, and perfect, plagal, and imperfect cadences in C, G, D, and F major.
 - Grade 4 practice adds five-accidental keys, alto-clef pitch reading, enharmonic equivalents, chromatic scales, technical scale-degree names, subdominant and dominant triads, extended compound metres, and recognition of duplets, double dots, and breve notes and rests.
 - An optional timed mode gives 20 seconds per question; unanswered questions count as incorrect.
-- The selected category, Grade ceiling, per-category question count, and timed-mode setting are saved locally in the browser and restored when the app is reopened.
+- The selected category, Grade ceiling, shared question count, timed-mode setting, and Practice mode preference are saved locally in the browser and restored when the app is reopened.
 - Every generated question carries the earliest applicable syllabus grade in a central curriculum map. This keeps the current mixed-level practice ready for a later Grade 4 or Grade 5 filter.
 - Every question now carries a stable `questionId` and `skillId`, including runtime-generated notation questions, so later synced history can group attempts reliably.
 - Completed and in-progress tests are stored locally as practice sessions and individual attempts. The history includes category, grade, skill, answer, correctness, timing, and a question snapshot; it is ready to sync to a server in a later phase.

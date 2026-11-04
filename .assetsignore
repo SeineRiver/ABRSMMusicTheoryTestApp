@@ -3,6 +3,7 @@
 .codex/
 .agents/
 .wrangler/
+node_modules/
 worker/
 work/
 output/

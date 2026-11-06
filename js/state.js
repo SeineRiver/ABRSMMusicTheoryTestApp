@@ -1,0 +1,18 @@
+export const state = {
+  test: [],
+  current: 0,
+  score: 0,
+  selected: null,
+  locked: false,
+  category: 'terms',
+  grade: 3,
+  timerEnabled: false,
+  practiceMode: false,
+  questionCount: 15,
+  timerId: null,
+  timerDeadline: null,
+  sessionId: null,
+  sessionStartedAt: null,
+  sessionCompleted: false,
+  questionStartedAt: null,
+};

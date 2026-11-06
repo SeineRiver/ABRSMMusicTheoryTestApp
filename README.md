@@ -2,13 +2,17 @@
 
 A simple, strictly client-side mock-test application primarily covering ABRSM Music Theory Grades 1–5.
 
-Current release: **2.2.0**
+Current release: **2.2.1**
 
 ## How to use
 
-No local server, build step, or package installation is required.
+No build step or package installation is required. Because the app now uses native JavaScript modules, serve the folder over HTTP instead of opening the HTML file with `file://`:
 
-Open [`index.html`](./index.html) directly in a web browser.
+```bash
+python3 -m http.server 8000
+```
+
+Then open <http://localhost:8000/> in a browser.
 
 ## How the mock test works
 
@@ -143,7 +147,7 @@ The maintained ground truth for the app is the PDF question bank:
 
 [`output/pdf/abrsm-terms-and-signs-grades-1-3.pdf`](./output/pdf/abrsm-terms-and-signs-grades-1-3.pdf)
 
-The Grade 1–3 PDF is the canonical reference for those terms-and-signs questions, answers, grade grouping, and notation graphics. Grade 4 terms were initially drawn from the supplied Italian and French PPSX presentations and reconciled with the maintained Grade 4 curriculum list. Grade 5 terms are the remaining entries in the maintained supplied list that do not already appear in Grades 1–4. The question data in [`app.js`](./app.js) is the client-side runtime copy used by the application. Runtime-generated interval, time-signature, key-signature, and scale questions are defined in `app.js`; their grade metadata is maintained in the central `CURRICULUM` map.
+The Grade 1–3 PDF is the canonical reference for those terms-and-signs questions, answers, grade grouping, and notation graphics. Grade 4 terms were initially drawn from the supplied Italian and French PPSX presentations and reconciled with the maintained Grade 4 curriculum list. Grade 5 terms are the remaining entries in the maintained supplied list that do not already appear in Grades 1–4. The runtime terms bank is in [`js/question-bank.js`](./js/question-bank.js). Generated questions are in [`js/quiz-engine.js`](./js/quiz-engine.js), with grade metadata in its `CURRICULUM` map.
 
 The PDF was compiled from:
 
@@ -157,12 +161,21 @@ Notation images used by both the app and the PDF are stored under [`assets/`](./
 ## Project structure
 
 ```text
-index.html                         Application markup
+index.html                          Application markup
+question-bank.html                 Browse the terms-and-signs bank
 privacy-policy.html                Privacy Policy
-styles.css                         Application styling
-app.js                             Question bank and test logic
-assets/                            Musical notation images
-output/pdf/                        Canonical PDF question bank
+styles.css                          Application styling
+app.js                              Browser-module entry point
+js/config.js                        Shared app version
+js/state.js                         Shared quiz state
+js/question-bank.js                 Terms-and-signs bank and metadata
+js/quiz-engine.js                   Question generators and sampling
+js/notation.js                      Music notation rendering helpers
+js/history.js                       Preferences, attempts, sync, and sign-in
+js/ui.js                            Screens, rendering, and interactions
+question-bank-page.js               Question bank page controller
+assets/                             Musical notation images
+output/pdf/                         Canonical PDF question bank
 ```
 
 ## Updating the bank
@@ -170,10 +183,10 @@ output/pdf/                        Canonical PDF question bank
 When adding or correcting questions:
 
 1. Update the canonical PDF question bank first.
-2. Update the corresponding grade array in `app.js`.
+2. Update the corresponding grade array in `js/question-bank.js`.
 3. Keep question wording, answers, grade tags, and image paths aligned between the PDF and app.
 4. Run a JavaScript syntax check before committing:
 
    ```bash
-   node --check app.js
+   for file in app.js question-bank-page.js js/*.js; do node --input-type=module --check < "$file" || exit 1; done
    ```

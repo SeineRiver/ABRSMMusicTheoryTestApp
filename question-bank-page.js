@@ -1,5 +1,8 @@
+import { APP_VERSION } from './js/config.js';
+import { BANK } from './js/question-bank.js';
+
 const bankContainer = document.getElementById('question-bank');
-const questionBank = window.ABRSM_QUESTION_BANK;
+const questionBank = BANK;
 const grades = [1, 2, 3, 4, 5];
 const tabList = document.createElement('div');
 tabList.className = 'bank-tabs';
@@ -72,3 +75,6 @@ grades.forEach((grade) => {
 panel.id = 'bank-panel';
 bankContainer.append(tabList, panel);
 renderGrade(1);
+document.querySelectorAll('[data-app-version]').forEach((element) => {
+  element.textContent = APP_VERSION;
+});

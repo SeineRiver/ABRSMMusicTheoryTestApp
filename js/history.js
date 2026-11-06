@@ -407,6 +407,7 @@ export {
   loadPreferences,
   practiceHistory,
   recordPracticeAttempt,
+  recordTimestamp,
   savePreferences,
   signOutGoogle,
   startPracticeSession,

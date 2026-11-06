@@ -1,6 +1,6 @@
 // The app keeps the syllabus data separate from question generation so that
 // later Grade 4/5 content can be added without changing existing generators.
-import { BANK, buildExplanation, ensureQuestionMetadata, stableQuestionSnapshot } from './question-bank.js';
+import { BANK, buildExplanation, ensureQuestionMetadata, isTermDistractor, stableQuestionSnapshot } from './question-bank.js';
 import {
   INTERVAL_DIATONIC_STEPS,
   NOTE_LETTERS,
@@ -157,7 +157,7 @@ function shuffle(list) {
 
 function makeQuestion(grade, entry) {
   const { answer: correct } = entry;
-  const distractors = shuffle([...new Set(BANK[grade].map((item) => item.answer).filter((answer) => answer !== correct))]).slice(0, 3);
+  const distractors = shuffle([...new Set(BANK[grade].filter((item) => isTermDistractor(entry, item)).map((item) => item.answer))]).slice(0, 3);
   // Illustrated entries use a visual-focused prompt; shared notation may add
   // the specific marking so the learner can tell which symbol is being asked.
   // Text-only entries name the term because the definition is being recalled.

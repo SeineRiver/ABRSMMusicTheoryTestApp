@@ -57,11 +57,14 @@ function renderNotation(element, notation, width) {
   element.setAttribute('aria-label', notation.alt);
   element.classList.toggle('hide-time-signature', Boolean(notation.hideTimeSignature));
   const scale = notation.scale || 1;
-  const container = element.closest('.question-notation-wrap, .review-notation, .key-signature-preview') || element.parentElement || element;
+  const isAnswer = element.classList.contains('answer-notation');
+  const container = isAnswer ? element : element.closest('.question-notation-wrap, .review-notation, .key-signature-preview') || element.parentElement || element;
   element.__notationObserver?.disconnect();
-  const initialWidth = container.clientWidth || container.getBoundingClientRect?.().width || width;
+  const style = window.getComputedStyle(container);
+  const contentWidth = container.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0);
+  const initialWidth = contentWidth || width;
   const draw = (availableWidth) => {
-    availableWidth = Math.max(220, Math.floor(availableWidth));
+    availableWidth = Math.max(isAnswer ? 120 : 220, Math.floor(availableWidth));
     // Some foldable cover screens report their physical width (1080px) as the
     // CSS viewport width. Include a portrait aspect-ratio check so those
     // screens still get one bar per system, while an unfolded wide viewport
@@ -86,13 +89,23 @@ function renderNotation(element, notation, width) {
       paddingleft: 0,
       paddingright: 0,
     });
+    // A viewBox lets CSS scale the entire SVG to fit a narrow answer card,
+    // instead of shrinking only its viewport and cropping the staff and clef.
+    element.querySelectorAll('svg').forEach((svg) => {
+      const svgWidth = parseFloat(svg.getAttribute('width'));
+      const svgHeight = parseFloat(svg.getAttribute('height'));
+      if (!svg.hasAttribute('viewBox') && svgWidth > 0 && svgHeight > 0) {
+        svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+        svg.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+      }
+    });
     if (notation.hideTimeSignature) {
       element.querySelectorAll('.abcjs-time-signature, .time-signature').forEach((timeSignature) => timeSignature.remove());
     }
   };
-  draw(initialWidth - 28);
-  if (window.ResizeObserver && container !== element) {
-    let lastWidth = Math.floor(container.clientWidth || container.getBoundingClientRect().width);
+  draw(initialWidth);
+  if (window.ResizeObserver) {
+    let lastWidth = Math.floor(initialWidth);
     const observer = new window.ResizeObserver(([entry]) => {
       const nextWidth = Math.floor(entry.contentRect.width);
       if (nextWidth > 0 && Math.abs(nextWidth - lastWidth) > 1) {

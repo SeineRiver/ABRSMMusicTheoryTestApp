@@ -241,7 +241,11 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .policy-content h2:not(:first-child) { margin-top: 24px; }
 .policy-content p { margin: 0; color: var(--muted); line-height: 1.6; }
 .bank-item img { display: block; max-width: min(100%, 440px); max-height: 200px; margin: 14px 0; object-fit: contain; }
-@media (max-width: 620px) { .rest-duration-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) {
+  .category-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .category-button { min-width: 0; min-height: 44px; padding: 8px 10px; font-size: 0.8rem; line-height: 1.25; }
+  .rest-duration-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 720px) { .settings-card .test-options { margin-top: 0; } }
 @media (max-width: 560px) { .site-header { align-items: flex-start; } .header-tools { align-items: flex-start; gap: 8px; } .auth-panel { min-width: 0; } .auth-status, .auth-message { max-width: 160px; font-size: 0.68rem; } .header-mark { width: 40px; height: 40px; font-size: 1.5rem; } .header-nav { gap: 0 10px; } .header-nav .nav-link { font-size: 0.82rem; } .skill-card-heading { display: block; } .skill-card-heading p { margin-top: 6px; text-align: left; } }
-@media (max-width: 520px) { .app-shell { width: min(100% - 22px, 760px); padding-top: 24px; } .site-header { margin-bottom: 28px; } .category-buttons { flex-direction: column; } .test-options { align-items: stretch; flex-direction: column; } .test-options label { justify-content: space-between; } .question-card { border-radius: 18px; padding: 22px 18px; } .answer-option { padding: 14px; } .pitch-answer-option, .time-signature-answer-option { padding: 6px 4px; } .answers.scale-identification-answers { grid-template-columns: 1fr; } .irregular-division-answer-option { padding: 10px 12px; } }
+@media (max-width: 520px) { .app-shell { width: min(100% - 22px, 760px); padding-top: 24px; } .site-header { margin-bottom: 28px; } .test-options { align-items: stretch; flex-direction: column; } .test-options label { justify-content: space-between; } .question-card { border-radius: 18px; padding: 22px 18px; } .answer-option { padding: 14px; } .pitch-answer-option, .time-signature-answer-option { padding: 6px 4px; } .answers.scale-identification-answers { grid-template-columns: 1fr; } .irregular-division-answer-option { padding: 10px 12px; } }

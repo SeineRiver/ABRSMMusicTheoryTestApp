@@ -277,6 +277,7 @@ function renderQuestion() {
   }
 
   const answers = $('answers');
+  answers.querySelectorAll('.answer-notation').forEach((element) => element.__notationObserver?.disconnect());
   answers.innerHTML = '';
   answers.classList.remove('correct', 'incorrect');
   answers.classList.toggle('interval-answers', item.category === 'intervals');
@@ -320,6 +321,8 @@ function renderQuestion() {
     button.dataset.answer = optionValue;
     const letter = String.fromCharCode(65 + index);
     button.setAttribute('aria-label', `Option ${letter}: ${optionValue}`);
+    // Measure notation only after its button has joined the answer grid.
+    answers.appendChild(button);
     if (item.category === 'intervals' && item.answerType !== 'interval-identification') {
       button.classList.add('interval-answer-option');
       button.innerHTML = `<strong class="answer-choice-label">${letter}.</strong><div class="answer-notation" role="img"></div>`;
@@ -334,7 +337,6 @@ function renderQuestion() {
       button.innerHTML = `<strong>${letter}.</strong> ${optionValue}`;
     }
     button.addEventListener('click', () => chooseAnswer(button, optionValue));
-    answers.appendChild(button);
   });
   startQuestionTimer();
 }

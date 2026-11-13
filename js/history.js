@@ -5,6 +5,7 @@ const PREFERENCES_STORAGE_KEY = 'abrsm-music-theory-quiz-preferences-v1';
 const PRACTICE_HISTORY_STORAGE_KEY = 'abrsm-music-theory-quiz-history-v1';
 const MAX_LOCAL_SESSIONS = 100;
 const MAX_LOCAL_ATTEMPTS = 5000;
+const MAX_SYNC_ATTEMPTS = 2000;
 const QUESTION_COUNT_OPTIONS = Object.freeze([5, 10, 15]);
 const DEFAULT_QUESTION_COUNT = 15;
 const authState = { idToken: null, userId: null, email: null, name: null, lastSync: null, googleReady: false };
@@ -91,36 +92,66 @@ function decodeJwtPayloadForDisplay(token) {
 function savePracticeHistory() {
   try {
     practiceHistory.version = 1;
-    practiceHistory.sessions = practiceHistory.sessions.slice(0, MAX_LOCAL_SESSIONS);
-    practiceHistory.attempts = practiceHistory.attempts.slice(0, MAX_LOCAL_ATTEMPTS);
+    practiceHistory.sessions = practiceHistory.sessions
+      .sort((a, b) => recordTimestamp(b, ['startedAt']) - recordTimestamp(a, ['startedAt'])).slice(0, MAX_LOCAL_SESSIONS);
+    practiceHistory.attempts = practiceHistory.attempts
+      .sort((a, b) => recordTimestamp(b, ['attemptedAt']) - recordTimestamp(a, ['attemptedAt'])).slice(0, MAX_LOCAL_ATTEMPTS);
     window.localStorage.setItem(PRACTICE_HISTORY_STORAGE_KEY, JSON.stringify(practiceHistory));
   } catch (error) {
     // Practice continues normally if browser storage is unavailable or full.
   }
+  window.dispatchEvent?.(new Event('abrsm-history-changed'));
 }
 
-async function syncPracticeHistory(endpoint = window.ABRSM_HISTORY_API_URL, userId = window.ABRSM_HISTORY_USER_ID) {
+let historySyncQueue = Promise.resolve();
+function syncPracticeHistory(endpoint = window.ABRSM_HISTORY_API_URL, userId = window.ABRSM_HISTORY_USER_ID) {
+  // Keep an older upload from finishing after a newer session summary.
+  const pending = historySyncQueue.then(() => uploadPracticeHistory(endpoint, userId));
+  historySyncQueue = pending.catch(() => {});
+  return pending;
+}
+
+async function uploadPracticeHistory(endpoint, userId) {
   if (!endpoint || typeof window.fetch !== 'function') return { synced: false, reason: 'not-configured' };
   const headers = { 'Content-Type': 'application/json' };
   const token = authState.idToken || window.ABRSM_HISTORY_AUTH_TOKEN;
   if (token) headers.Authorization = `Bearer ${token}`;
   else if (userId) headers['X-User-Id'] = userId;
   else return { synced: false, reason: 'not-authenticated' };
+  // The API accepts 2,000 attempts per request. Send every retained attempt,
+  // including older offline work, rather than silently dropping the tail.
+  const ownerId = practiceHistory.ownerId;
+  const sessions = [...practiceHistory.sessions];
+  const attempts = [...practiceHistory.attempts];
+  let syncedSessions = 0;
+  let syncedAttempts = 0;
   try {
-    const response = await window.fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(practiceHistory),
-    });
-    if (!response.ok) return { synced: false, status: response.status };
-    return { synced: true, ...(await response.json()) };
+    for (let offset = 0; offset < Math.max(attempts.length, 1); offset += MAX_SYNC_ATTEMPTS) {
+      if (ownerId !== practiceHistory.ownerId || token !== (authState.idToken || window.ABRSM_HISTORY_AUTH_TOKEN)) {
+        return { synced: false, reason: 'account-changed' };
+      }
+      const response = await window.fetch(endpoint, {
+        method: 'POST', headers,
+        body: JSON.stringify({ version: 1, sessions: offset === 0 ? sessions : [], attempts: attempts.slice(offset, offset + MAX_SYNC_ATTEMPTS) }),
+      });
+      if (!response.ok) return { synced: false, status: response.status };
+      const result = await response.json();
+      syncedSessions += Number(result.syncedSessions) || 0;
+      syncedAttempts += Number(result.syncedAttempts) || 0;
+    }
+    if (ownerId !== practiceHistory.ownerId || token !== (authState.idToken || window.ABRSM_HISTORY_AUTH_TOKEN)) {
+      return { synced: false, reason: 'account-changed' };
+    }
+    authState.lastSync = new Date().toISOString();
+    window.dispatchEvent?.(new Event('abrsm-history-changed'));
+    return { synced: true, syncedSessions, syncedAttempts };
   } catch (error) {
     return { synced: false, reason: 'network-error' };
   }
 }
 
 function schedulePracticeHistorySync() {
-  if (!window.ABRSM_HISTORY_API_URL || (!authState.idToken && !window.ABRSM_HISTORY_USER_ID)) return;
+  if (!window.ABRSM_HISTORY_API_URL || (!authState.idToken && !window.ABRSM_HISTORY_AUTH_TOKEN && !window.ABRSM_HISTORY_USER_ID)) return;
   if (historySyncTimer !== null) window.clearTimeout(historySyncTimer);
   historySyncTimer = window.setTimeout(() => {
     historySyncTimer = null;
@@ -131,9 +162,11 @@ function schedulePracticeHistorySync() {
 async function fetchRemotePracticeHistory() {
   const endpoint = historyEndpoint('/history');
   const token = authState.idToken || window.ABRSM_HISTORY_AUTH_TOKEN;
-  if (!endpoint || !token) return { ok: false, reason: 'not-configured' };
+  const devUserId = window.ABRSM_HISTORY_USER_ID;
+  if (!endpoint || (!token && !devUserId)) return { ok: false, reason: 'not-configured' };
   try {
-    const response = await window.fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+    const headers = token ? { Authorization: `Bearer ${token}` } : { 'X-User-Id': devUserId };
+    const response = await window.fetch(endpoint, { headers });
     if (!response.ok) return { ok: false, status: response.status };
     const value = await response.json();
     return {
@@ -165,7 +198,7 @@ function mergeHistoryRecords(localRecords, remoteRecords, timestampFields) {
       merged.set(record.id, record);
     }
   });
-  return [...merged.values()];
+  return [...merged.values()].sort((a, b) => recordTimestamp(b, timestampFields) - recordTimestamp(a, timestampFields));
 }
 
 async function mergeLocalHistoryForUser(userId) {
@@ -175,18 +208,46 @@ async function mergeLocalHistoryForUser(userId) {
     practiceHistory.sessions = [];
     practiceHistory.attempts = [];
   }
-  const localSessions = practiceHistory.sessions;
-  const localAttempts = practiceHistory.attempts;
+  practiceHistory.ownerId = userId;
+  const token = authState.idToken;
+  savePracticeHistory();
   const remote = await fetchRemotePracticeHistory();
+  if (token !== authState.idToken || (authState.userId || window.ABRSM_HISTORY_USER_ID) !== userId) {
+    return { remote: { ok: false, reason: 'account-changed' }, synced: { synced: false, reason: 'account-changed' } };
+  }
   if (remote.ok) {
-    practiceHistory.sessions = mergeHistoryRecords(localSessions, remote.sessions, ['updatedAt', 'completedAt', 'startedAt']);
-    practiceHistory.attempts = mergeHistoryRecords(localAttempts, remote.attempts, ['attemptedAt']);
+    practiceHistory.sessions = mergeHistoryRecords(practiceHistory.sessions, remote.sessions, ['updatedAt', 'completedAt', 'startedAt']);
+    practiceHistory.attempts = mergeHistoryRecords(practiceHistory.attempts, remote.attempts, ['attemptedAt']);
   }
   practiceHistory.ownerId = userId;
   savePracticeHistory();
   const synced = await syncPracticeHistory();
   authState.lastSync = synced.synced ? new Date().toISOString() : null;
   return { remote, synced };
+}
+
+let refreshInFlight = null;
+function refreshPracticeHistory() {
+  const userId = authState.userId || window.ABRSM_HISTORY_USER_ID;
+  if (!userId) return Promise.resolve({ remote: { ok: false }, synced: { synced: false, reason: 'not-authenticated' } });
+  if (refreshInFlight?.userId === userId) return refreshInFlight.promise;
+  const pending = { userId, promise: null };
+  pending.promise = mergeLocalHistoryForUser(userId).finally(() => {
+    if (refreshInFlight === pending) refreshInFlight = null;
+  });
+  refreshInFlight = pending;
+  return pending.promise;
+}
+
+let historySyncInitialized = false;
+function initializeHistorySync() {
+  if (historySyncInitialized) return;
+  historySyncInitialized = true;
+  const retry = () => { void refreshPracticeHistory(); };
+  window.addEventListener('online', retry);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') retry();
+  });
 }
 
 function serializeHistoryValue(value) {
@@ -203,6 +264,7 @@ function questionSnapshotForHistory(question) {
 }
 
 function upsertPracticeSession(session) {
+  session.updatedAt = new Date().toISOString();
   const existingIndex = practiceHistory.sessions.findIndex((candidate) => candidate.id === session.id);
   if (existingIndex >= 0) practiceHistory.sessions[existingIndex] = { ...practiceHistory.sessions[existingIndex], ...session };
   else practiceHistory.sessions.unshift(session);
@@ -229,6 +291,7 @@ function startPracticeSession(questionCount) {
     correctCount: 0,
     wrongCount: 0,
   });
+  schedulePracticeHistorySync();
 }
 
 function completePracticeSession(status = 'completed') {
@@ -239,6 +302,7 @@ function completePracticeSession(status = 'completed') {
   session.status = status;
   session.completedAt = new Date().toISOString();
   session.score = state.score;
+  session.updatedAt = session.completedAt;
   session.attemptCount = attempts.length;
   session.correctCount = attempts.filter((attempt) => attempt.wasCorrect).length;
   session.wrongCount = attempts.filter((attempt) => !attempt.wasCorrect).length;
@@ -272,8 +336,10 @@ function recordPracticeAttempt(item, wasCorrect, timedOut) {
     session.correctCount = (session.correctCount || 0) + (wasCorrect ? 1 : 0);
     session.wrongCount = (session.wrongCount || 0) + (wasCorrect ? 0 : 1);
     session.score = state.score;
+    session.updatedAt = attemptedAt;
   }
   savePracticeHistory();
+  schedulePracticeHistorySync();
 }
 
 window.ABRSM_PRACTICE_HISTORY = {
@@ -333,7 +399,7 @@ async function handleGoogleCredential(response) {
   window.ABRSM_HISTORY_AUTH_TOKEN = token;
   authUi.renderAuthState();
   authUi.setAuthMessage('Merging local history…');
-  const result = await mergeLocalHistoryForUser(authState.userId);
+  const result = await refreshPracticeHistory();
   if (result.synced.synced) {
     authUi.setAuthMessage('History merged and synced.', 'success');
   } else if (result.remote.ok) {
@@ -404,10 +470,12 @@ export {
   completePracticeSession,
   configureAuthUI,
   initializeGoogleSignIn,
+  initializeHistorySync,
   loadPreferences,
   practiceHistory,
   recordPracticeAttempt,
   recordTimestamp,
+  refreshPracticeHistory,
   savePreferences,
   signOutGoogle,
   startPracticeSession,

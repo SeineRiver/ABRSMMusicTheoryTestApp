@@ -4,6 +4,7 @@
 .agents/
 .wrangler/
 node_modules/
+tests/
 worker/
 work/
 output/

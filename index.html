@@ -22,9 +22,10 @@
           <div>
             <h1>Music Theory Quiz</h1>
             <nav class="header-nav" aria-label="Quiz resources">
-              <a class="text-link nav-link" href="question-bank.html">Question bank</a>
-              <button id="review-mistakes-button" class="text-link nav-link" type="button">Review mistakes</button>
-              <button id="needs-practice-button" class="text-link nav-link" type="button">Needs practice</button>
+              <a class="text-link nav-link" href="question-bank.html">Questions</a>
+              <button id="review-mistakes-button" class="text-link nav-link" type="button">Mistakes</button>
+              <button id="needs-practice-button" class="text-link nav-link" type="button">Practice</button>
+              <button id="stats-button" class="text-link nav-link" type="button">Stats</button>
               <button id="settings-button" class="text-link nav-link" type="button" aria-controls="settings-screen" aria-expanded="false">Settings</button>
             </nav>
           </div>
@@ -107,6 +108,17 @@
           <p>Skills are ranked by accuracy so you can focus on the areas that need the most work.</p>
         </div>
         <div id="needs-practice-list" class="history-list"></div>
+      </section>
+
+      <section id="stats-screen" class="screen history-screen hidden" aria-labelledby="stats-title" aria-live="polite">
+        <div class="history-toolbar"><button id="stats-back-button" class="back-button" type="button">← Back to quiz</button></div>
+        <div class="history-heading">
+          <p class="eyebrow">TEST HISTORY</p>
+          <h2 id="stats-title">Stats</h2>
+          <p>Past tests, scores, and the questions to revisit.</p>
+        </div>
+        <p id="stats-sync-status" class="stats-sync-status" role="status"></p>
+        <div id="stats-list" class="history-list"></div>
       </section>
 
       <section id="test-screen" class="screen" aria-live="polite">

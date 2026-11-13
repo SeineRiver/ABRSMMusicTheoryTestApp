@@ -40,9 +40,10 @@ Then open <http://localhost:8000/> in a browser.
 - The selected category, Grade ceiling, shared question count, timed-mode setting, and Practice mode preference are saved locally in the browser and restored when the app is reopened.
 - Every generated question carries the earliest applicable syllabus grade in a central curriculum map. This keeps the current mixed-level practice ready for a later Grade 4 or Grade 5 filter.
 - Every question now carries a stable `questionId` and `skillId`, including runtime-generated notation questions, so later synced history can group attempts reliably.
-- Completed and in-progress tests are stored locally as practice sessions and individual attempts. The history includes category, grade, skill, answer, correctness, timing, and a question snapshot; it is ready to sync to a server in a later phase.
+- Stats lists past tests with their date/time, category, score, and links to the exact missed questions on the Questions page, including generated notation questions.
+- Completed and in-progress tests are stored locally as practice sessions and individual attempts. The history includes category, grade, skill, answer, correctness, timing, and a question snapshot.
 - The main quiz includes **Review mistakes** and **Needs practice** views. Mistakes retain their notation, answers, and explanations; skills are ranked by accuracy and can launch focused practice from saved questions.
-- An optional history-sync client can merge browser history with the signed-in Google account and POST the merged history to a Cloudflare Worker when `window.ABRSM_HISTORY_API_URL` is configured. The client remains offline-first when no API URL is configured.
+- An optional history-sync client can merge browser history with the signed-in Google account and POST the merged history to a Cloudflare Worker when `window.ABRSM_HISTORY_API_URL` is configured. History stays local when offline. Signed-in users sync after answers and test completion, when opening a history view, and when connectivity returns. Large histories are uploaded in batches.
 - Progress and the current score are shown during the test.
 - After the final question, the result page lists incorrect answers alongside the correct answers.
 - **Do another test** starts a fresh randomized test.
@@ -190,3 +191,11 @@ When adding or correcting questions:
    ```bash
    for file in app.js question-bank-page.js js/*.js; do node --input-type=module --check < "$file" || exit 1; done
    ```
+
+## History checks
+
+Run the history and Stats regression checks with Node.js:
+
+```bash
+node --test tests/practice-history.test.mjs
+```

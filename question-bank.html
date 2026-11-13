@@ -6,17 +6,18 @@
     <meta name="description" content="Full ABRSM Music Theory terms and signs question bank for Grades 1 to 5." />
     <title>ABRSM Terms &amp; Signs Question Bank</title>
     <link rel="stylesheet" href="styles.css?v=2.2.3" />
+    <script src="vendor/abcjs-basic-min.js" defer></script>
     <script type="module" src="question-bank-page.js?v=2.2.3"></script>
   </head>
   <body>
     <main class="app-shell">
       <nav class="page-nav" aria-label="Primary navigation">
-        <a class="text-link" href="index.html">Start a mock test</a>
+        <a id="questions-back-link" class="text-link" href="index.html">← Back to quiz</a>
       </nav>
       <header class="bank-header">
-        <p class="eyebrow">ABRSM MUSIC THEORY · GRADES 1–5</p>
-        <h1>Terms &amp; Signs<br><span>Question Bank</span></h1>
-        <p>Browse the bank one grade at a time. Each entry includes its correct answer, explanation, and score example where relevant.</p>
+        <p id="questions-eyebrow" class="eyebrow">ABRSM MUSIC THEORY · GRADES 1–5</p>
+        <h1 id="questions-title">Terms &amp; Signs<br><span>Question Bank</span></h1>
+        <p id="questions-description">Browse the bank one grade at a time. Each entry includes its correct answer, explanation, and score example where relevant.</p>
       </header>
       <div id="question-bank" aria-live="polite"></div>
       <footer class="site-footer"><span data-app-version></span> · © 2026 HuyNQ - <a href="privacy-policy.html">Privacy Policy</a></footer>

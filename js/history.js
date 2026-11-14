@@ -1,6 +1,8 @@
 import { state } from './state.js';
 
 const TIMER_SECONDS = 20;
+const MIN_TIMER_SECONDS = 15;
+const MAX_TIMER_SECONDS = 60;
 const PREFERENCES_STORAGE_KEY = 'abrsm-music-theory-quiz-preferences-v1';
 const PRACTICE_HISTORY_STORAGE_KEY = 'abrsm-music-theory-quiz-history-v1';
 const MAX_LOCAL_SESSIONS = 100;
@@ -24,9 +26,13 @@ function loadPreferences() {
     const grade = Number.isInteger(value.grade) && value.grade >= 1 && value.grade <= 5 ? value.grade : 3;
     const storedQuestionCount = Number(value.questionCount ?? value.questionCounts?.[category] ?? value.questionCounts?.terms);
     const questionCount = QUESTION_COUNT_OPTIONS.includes(storedQuestionCount) ? storedQuestionCount : DEFAULT_QUESTION_COUNT;
-    return { category, grade, timerEnabled: Boolean(value.timerEnabled), practiceMode: Boolean(value.practiceMode), questionCount };
+    const storedTimerSeconds = Number(value.timePerQuestion);
+    const timePerQuestion = Number.isFinite(storedTimerSeconds)
+      ? Math.min(MAX_TIMER_SECONDS, Math.max(MIN_TIMER_SECONDS, Math.round(storedTimerSeconds)))
+      : TIMER_SECONDS;
+    return { category, grade, timerEnabled: Boolean(value.timerEnabled), timePerQuestion, practiceMode: Boolean(value.practiceMode), questionCount };
   } catch (error) {
-    return { category: 'terms', grade: 3, timerEnabled: false, practiceMode: false, questionCount: DEFAULT_QUESTION_COUNT };
+    return { category: 'terms', grade: 3, timerEnabled: false, timePerQuestion: TIMER_SECONDS, practiceMode: false, questionCount: DEFAULT_QUESTION_COUNT };
   }
 }
 
@@ -36,6 +42,7 @@ function savePreferences() {
       category: state.category,
       grade: state.grade,
       timerEnabled: state.timerEnabled,
+      timePerQuestion: state.timePerQuestion,
       practiceMode: state.practiceMode,
       questionCount: state.questionCount,
     }));

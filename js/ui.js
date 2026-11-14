@@ -98,9 +98,13 @@ let settingsReturnScreen = 'test';
 function syncSettingsControls() {
   const questionCount = $('test-length');
   const timer = $('timer-enabled');
+  const timerDuration = $('timer-duration');
+  const timerDurationValue = $('timer-duration-value');
   const practiceMode = $('practice-mode-toggle');
   if (questionCount) questionCount.value = String(state.questionCount);
   if (timer) timer.checked = state.timerEnabled;
+  if (timerDuration) timerDuration.value = String(state.timePerQuestion);
+  if (timerDurationValue) timerDurationValue.textContent = `${state.timePerQuestion} seconds`;
   if (practiceMode) {
     practiceMode.setAttribute('aria-checked', String(state.practiceMode));
     practiceMode.classList.toggle('active', state.practiceMode);
@@ -156,7 +160,7 @@ function startQuestionTimer() {
   const timer = $('question-timer');
   timer.classList.toggle('hidden', !state.timerEnabled);
   if (!state.timerEnabled) return;
-  state.timerDeadline = Date.now() + TIMER_SECONDS * 1000;
+  state.timerDeadline = Date.now() + state.timePerQuestion * 1000;
   const tick = () => {
     const remaining = Math.max(0, Math.ceil((state.timerDeadline - Date.now()) / 1000));
     updateQuestionTimer(remaining);
@@ -949,6 +953,12 @@ function initializeQuizApp() {
   });
   $('timer-enabled').addEventListener('change', (event) => {
     state.timerEnabled = event.target.checked;
+    settingsChanged = true;
+    savePreferences();
+  });
+  $('timer-duration').addEventListener('input', (event) => {
+    state.timePerQuestion = Math.min(60, Math.max(15, Number(event.target.value) || TIMER_SECONDS));
+    $('timer-duration-value').textContent = `${state.timePerQuestion} seconds`;
     settingsChanged = true;
     savePreferences();
   });

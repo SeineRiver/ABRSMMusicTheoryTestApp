@@ -7,6 +7,7 @@ export const state = {
   category: 'terms',
   grade: 3,
   timerEnabled: false,
+  timePerQuestion: 20,
   practiceMode: false,
   questionCount: 15,
   timerId: null,

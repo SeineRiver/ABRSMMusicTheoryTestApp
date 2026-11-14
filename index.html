@@ -70,7 +70,13 @@
                 <option value="5">5</option>
               </select>
             </label>
-            <label class="timer-toggle" for="timer-enabled"><input id="timer-enabled" type="checkbox" /> Timed mode · 20s per question</label>
+            <label class="timer-toggle" for="timer-enabled"><input id="timer-enabled" type="checkbox" /> Timed mode</label>
+            <div class="timer-duration-setting">
+              <label for="timer-duration">Time per question</label>
+              <input id="timer-duration" type="range" min="15" max="60" step="1" value="20" aria-describedby="timer-duration-help" />
+              <output id="timer-duration-value" for="timer-duration">20 seconds</output>
+              <span id="timer-duration-help" class="timer-duration-help">Choose 15–60 seconds for timed mode.</span>
+            </div>
           </div>
           <div class="practice-mode-setting">
             <div class="practice-mode-copy">

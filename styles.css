@@ -59,8 +59,20 @@ h1 { margin-bottom: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 0.98; l
 .test-options label { display: flex; align-items: center; gap: 8px; }
 .timer-toggle { cursor: pointer; }
 .timer-toggle input { accent-color: var(--blue); width: 16px; height: 16px; }
+.timer-duration-setting { display: grid; grid-template-columns: auto minmax(140px, 1fr) auto; align-items: center; gap: 8px 12px; width: min(100%, 460px); }
+.timer-duration-setting label { color: var(--ink); }
+.timer-duration-setting input { width: 100%; accent-color: var(--blue); cursor: pointer; }
+.timer-duration-setting output { min-width: 88px; color: var(--blue-dark); font-variant-numeric: tabular-nums; text-align: right; }
+.timer-duration-help { grid-column: 1 / -1; color: var(--muted); font-size: 0.76rem; font-weight: 500; }
 .test-options select { border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); padding: 8px 10px; font: inherit; cursor: pointer; }
 .test-options select:focus-visible { outline: 3px solid #55a3da66; outline-offset: 2px; }
+@media (max-width: 440px) {
+  .timer-duration-setting { grid-template-columns: 1fr auto; }
+  .timer-duration-setting label { grid-column: 1; }
+  .timer-duration-setting input { grid-column: 1 / -1; grid-row: 2; }
+  .timer-duration-setting output { grid-column: 2; grid-row: 1; }
+  .timer-duration-help { grid-row: 3; }
+}
 .settings-toolbar { margin-bottom: 20px; }
 .back-button { border: 0; background: transparent; color: var(--blue); padding: 0; font: inherit; font-size: 0.9rem; font-weight: 800; cursor: pointer; }
 .back-button:hover, .back-button:focus-visible { color: var(--blue-dark); text-decoration: underline; outline: none; }
